@@ -1,553 +1,743 @@
 # dRFEtools - dynamic Recursive Feature Elimination
 
 `dRFEtools` is a package for dynamic recursive feature elimination with
-sklearn.
+sklearn. Currently supporting random forest classification and regression,
+and linear models (linear, lasso, ridge, and elastic net).
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
 Package developed in Python 3.6+.
 
+This package has several function to run dynamic recursive feature elimination
+(dRFE) for random forest and linear model classifier and regression models. For
+random forest, it assumes Out-of-Bag (OOB) is set to True. For linear models,
+it generates a developmental set. For both classification and regression, three
+measurements are calculated for feature selection:
+
+Classification:
+
+1.  Normalized mutual information
+2.  Accuracy
+3.  Area under the curve (AUC) ROC curve
+
+Regression:
+
+1.  R2 (this can be negative if model is arbitrarily worse)
+2.  Explained variance
+3.  Mean squared error
+
+The package has been split in to three additional scripts for:
+
+1.  Random forest feature elimination (AP)
+2.  Linear model regression feature elimination (KJB)
+3.  Rank features function (TK)
+4.  Lowess redundant selection (KJB)
+
+# Table of Contents
+
+1.  [Citation](#org7b64d47)
+2.  [Installation](#org04443e4)
+3.  [Reference Manual](#org5afd041)
+    1.  [dRFEtools main functions](#org6171433)
+    2.  [Redundant features functions](#org3cfdf65)
+    3.  [Plotting functions](#org8ecca01)
+    4.  [Metric functions](#org377b1aa)
+    5.  [Linear model classes for dRFE](#org288aaeb)
+    6.  [Random forest helper functions](#orga29d49b)
+    7.  [Linear model helper functions](#orgbda21bf)
+
+<a id="org7b64d47"></a>
+
 ## Citation
+
 If using please cite: XXX.
 
-## Table of Contents
 
-1.  [Installation](#orgc61a26f)
-2.  [Reference Manual](#orged7f79c)
-    1.  [Feature Elimination Main](#orgdcb05e0)
-    2.  [Feature Rank Function](#org6d007c2)
-    3.  [N Feature Iterator](#orgf676484)
-    4.  [OOB Prediction](#org6ef4a54)
-    5.  [OOB Accuracy Score](#orgd8c0565)
-    6.  [OOB Normalized Mutual Information Score](#org2bede4d)
-    7.  [OOB Area Under ROC Curve Score](#org1a39bf3)
-    8.  [Plot Feature Elimination by Accuracy](#org828dfec)
-    9.  [Plot Feature Elimination by NMI](#org075f47f)
-    10. [Plot Feature Elimination by AUC](#orgd34b506)
-    11. [Feature Elimination Subfunction](#org31603e5)
-    12. [Feature Elimination Step](#org45393f3)
-    13. [Logistic Regression Class](#orgb71b427)
-    14. [Developmental Test Set Predictions](#org8e341e8)
-    15. [Developmental Test Set Accuracy Score](#org4347e30)
-    16. [Developmental Test Set NMI Score](#org2f60132)
-    17. [Developmental Test Set ROC Score](#orgc8af4ad)
-    18. [Logistic Regression Feature Elimination Subfunction](#orgc36d680)
-    19. [Logistic Regression Feature Elimination Step](#org82e515d)
-
-<a id="orgc61a26f"></a>
+<a id="org04443e4"></a>
 
 ## Installation
 
 `pip install --user dRFEtools`
 
 
-<a id="orged7f79c"></a>
+<a id="org5afd041"></a>
 
 ## Reference Manual
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
+<a id="org6171433"></a>
 
-<colgroup>
-<col  class="org-left" />
+### dRFEtools main functions
 
-<col  class="org-left" />
-</colgroup>
-<tbody>
-<tr>
-<td class="org-left">Function</td>
-<td class="org-left">Description</td>
-</tr>
+1.  dRFE - Random Forest
 
+    `feature_elimination`
 
-<tr>
-<td class="org-left">feature<sub>elimination</sub></td>
-<td class="org-left">Runs random forest classification feature elimination</td>
-</tr>
+    Runs random forest feature elimination step over iterator process.
 
+    **Args:**
 
-<tr>
-<td class="org-left">features<sub>rank</sub><sub>fnc</sub></td>
-<td class="org-left">Rank features</td>
-</tr>
+    -   estimator: Random forest classifier object
+    -   X: a data frame of training data
+    -   Y: a vector of sample labels from training data set
+    -   features: a vector of feature names
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   elimination_rate: percent rate to reduce feature list. default .2
+    -   RANK: Output feature ranking. default=True (Boolean)
 
+    **Yields:**
 
-<tr>
-<td class="org-left">n<sub>features</sub><sub>iter</sub></td>
-<td class="org-left">Determines the features to keep</td>
-</tr>
+    -   dict: a dictionary with number of features, normalized mutual information score, accuracy score, and array of the indexes for features to keep
 
+2.  dRFE - Linear Models
 
-<tr>
-<td class="org-left">oob<sub>predictions</sub></td>
-<td class="org-left">Extracts out-of-bag (OOB) predictions from random forest classifier classes</td>
-</tr>
+    `dev_rfe`
 
+    Runs recursive feature elimination for linear model step over iterator
+    process assuming developmental set is needed.
 
-<tr>
-<td class="org-left">oob<sub>score</sub><sub>accuracy</sub></td>
-<td class="org-left">Calculates the accuracy score for the OOB predictions</td>
-</tr>
+    **Args:**
 
+    -   estimator: regression linear model object
+    -   X: a data frame of training data
+    -   Y: a vector of sample labels from training data set
+    -   features: a vector of feature names
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   elimination_rate: percent rate to reduce feature list. default .2
+    -   dev_size: developmental set size. default '0.20'
+    -   RANK: run feature ranking, default 'True'
+    -   SEED: random state. default 'True'
 
-<tr>
-<td class="org-left">oob<sub>score</sub><sub>nmi</sub></td>
-<td class="org-left">Calculates the normalized mutual information score for the OOB predictions</td>
-</tr>
+    **Yields:**
 
+    -   dict: a dictionary with number of features, r2 score, mean square error,
+        expalined variance, and array of the indices for features to keep
 
-<tr>
-<td class="org-left">oob<sub>score</sub><sub>roc</sub></td>
-<td class="org-left">Calculates the area under the ROC curve (AUC) for the OOB predictions</td>
-</tr>
+3.  Feature Rank Function
 
+    `feature_rank_fnc`
 
-<tr>
-<td class="org-left">plot<sub>acc</sub></td>
-<td class="org-left">Plot feature elimination with accuracy as measurement</td>
-</tr>
+    This function ranks features within the feature elimination loop.
 
+    **Args:**
 
-<tr>
-<td class="org-left">plot<sub>nmi</sub></td>
-<td class="org-left">Plot feature elimination with NMI as measurement</td>
-</tr>
+    -   features: A vector of feature names
+    -   rank: A vector with feature ranks based on absolute value of feature importance
+    -   n_features_to_keep: Number of features to keep. (Int)
+    -   fold: Fold to analyzed. (Int)
+    -   out_dir: Output directory for text file. Default '.'
+    -   RANK: Boolean (True or False)
 
+    **Yields:**
 
-<tr>
-<td class="org-left">plot<sub>roc</sub></td>
-<td class="org-left">Plot feature elimination with AUC ROC curve as measurement</td>
-</tr>
+    -   Text file: Ranked features by fold tab-delimited text file, only if RANK=True
 
+4.  N Feature Iterator
 
-<tr>
-<td class="org-left">rf<sub>fe</sub></td>
-<td class="org-left">Iterate over features to be eliminated</td>
-</tr>
+    `n_features_iter`
 
+    Determines the features to keep.
 
-<tr>
-<td class="org-left">rf<sub>fe</sub><sub>step</sub></td>
-<td class="org-left">Apply random forest to training data, rank features, and conduct feature elimination (single step)</td>
-</tr>
+    **Args:**
 
+    -   nf: current number of features
+    -   keep_rate: percentage of features to keep
 
-<tr>
-<td class="org-left">dev<sub>predictions</sub></td>
-<td class="org-left">Uses development testing set to predict logistic regression classifier classes</td>
-</tr>
+    **Yields:**
 
+    -   int: number of features to keep
 
-<tr>
-<td class="org-left">dev<sub>score</sub><sub>accuracy</sub></td>
-<td class="org-left">Calculates the accuracy score for the developmental test set predictions</td>
-</tr>
 
+<a id="org3cfdf65"></a>
 
-<tr>
-<td class="org-left">dev<sub>score</sub><sub>nmi</sub></td>
-<td class="org-left">Calculates the normalized mutual information score for the developmental test set predictions</td>
-</tr>
+### Redundant features functions
 
+1.  Run lowess
 
-<tr>
-<td class="org-left">dev<sub>score</sub><sub>roc</sub></td>
-<td class="org-left">Calculates the area under the ROC curve (AUC) for the developmental test set predictions</td>
-</tr>
+    `run_lowess`
 
+    This function runs the lowess function and caches it to memory.
 
-<tr>
-<td class="org-left">lr<sub>fe</sub></td>
-<td class="org-left">Iterate over features to be eliminated, logistic regression</td>
-</tr>
+    **Args:**
 
+    -   x: the x-values of the observed points
+    -   y: the y-values of the observed points
+    -   frac: the fraction of the data used when estimating each y-value. default 3/10
 
-<tr>
-<td class="org-left">lr<sub>fe</sub><sub>step</sub></td>
-<td class="org-left">Apply logistic regression to training data, split to developmental test set, rank features, and conduct feature elimination (single step)</td>
-</tr>
-</tbody>
-</table>
+    **Yields:**
 
+    -   z: 2D array of results
 
-<a id="orgdcb05e0"></a>
+2.  Convert array to tuple
 
-### Feature Elimination Main
+    `array_to_tuple`
 
-`feature_elimination`
+    This function attempts to convert a numpy array to a tuple.
 
-Runs random forest feature elimination step over iterator process.
+    **Args:**
 
-**Args:**
+    -   np_array: numpy array
 
--   estimator: Random forest classifier object
--   X: a data frame of training data
--   Y: a vector of sample labels from training data set
--   features: a vector of feature names
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
--   elimination<sub>rate</sub>: percent rate to reduce feature list. default .2
--   RANK: Output feature ranking. default=True (Boolean)
+    **Yields:**
 
-**Yields:**
+    -   tuple
 
--   dict: a dictionary with number of features, normalized mutual information score, accuracy score, and array of the indexes for features to keep
+3.  Extract dRFE as a dataframe
 
+    `get_elim_df_ordered`
 
-<a id="org6d007c2"></a>
+    This function converts the dRFE dictionary to a pandas dataframe.
 
-### Feature Rank Function
+    **Args:**
 
-`feature_rank_fnc`
+    -   d: dRFE dictionary
+    -   multi: is this for multiple classes. (True or False)
 
-Ranks features.
+    **Yields:**
 
-**Args:**
+    -   df_elim: dRFE as a dataframe with log10 transformed features
 
--   features: A vector of feature names
--   rank: A vector with feature ranks based on absolute value of feature importance
--   n<sub>features</sub><sub>to</sub><sub>keep</sub>: Number of features to keep. (Int)
--   fold: Fold to analyzed. (Int)
--   out<sub>dir</sub>: Output directory for text file. Default '.'
--   RANK: Boolean (True or False)
+4.  Calculate lowess curve
 
-**Yields:**
+    `cal_lowess`
 
--   Text file: Ranked features by fold tab-delimited text file, only if RANK=True
+    This function calculates the lowess curve.
 
+    **Args:**
 
-<a id="orgf676484"></a>
+    -   d: dRFE dictionary
+    -   frac: the fraction of the data used when estimating each y-value
+    -   multi: is this for multiple classes. (True or False)
 
-### N Feature Iterator
+    **Yields:**
 
-`n_features_iter`
+    -   x: dRFE log10 transformed features
+    -   y: dRFE metrics
+    -   z: 2D numpy array with lowess curve
+    -   xnew: increased intervals
+    -   ynew: interpolated metrics for xnew
 
-Determines the features to keep.
+5.  Calculate lowess curve for log10
 
-**Args:**
+    `cal_lowess`
 
--   nf: current number of features
--   keep<sub>rate</sub>: percentage of features to keep
+    This function calculates the rate of change on the lowess fitted curve with
+    log10 transformated input.
 
-**Yields:**
+    **Args:**
 
--   int: number of features to keep
+    -   d: dRFE dictionary
+    -   frac: the fraction of the data used when estimating each y-value
+    -   multi: is this for multiple classes. default False
 
+    **Yields:**
 
-<a id="org6ef4a54"></a>
+    -   data frame: dataframe with n_features, lowess value, and rate of change (DxDy)
 
-### OOB Prediction
+6.  Extract max lowess
 
-`oob_predictions`
+    `extract_max_lowess`
 
-Extracts out-of-bag (OOB) predictions from random forest classifier classes.
+    This function extracts the max features based on rate of change of log10
+    transformed lowess fit curve.
 
-**Args:**
+    **Args:**
 
--   estimator: Random forest classifier object
+    -   d: dRFE dictionary
+    -   frac: the fraction of the data used when estimating each y-value. default 3/10
+    -   multi: is this for multiple classes. default False
 
-**Yields:**
+    **Yields:**
 
--   vector: OOB predicted labels
+    -   int: number of max features (smallest subset)
 
+7.  Extract redundant lowess
 
-<a id="orgd8c0565"></a>
+    `extract_redundant_lowess`
 
-### OOB Accuracy Score
+    This function extracts the redundant features based on rate of change of log10
+    transformed lowess fit curve.
 
-`oob_score_accuracy`
+    **Args:**
 
-Calculates the accuracy score from the OOB predictions.
+    -   d: dRFE dictionary
+    -   frac: the fraction of the data used when estimating each y-value. default 3/10
+    -   step_size: rate of change step size to analyze for extraction. default 0.05
+    -   multi: is this for multiple classes. default False
 
-**Args:**
+    **Yields:**
 
--   estimator: Random forest classifier object
--   Y: a vector of sample labels from training data set
+    -   int: number of redundant features
 
-**Yields:**
+8.  Optimize lowess plot
 
--   float: accuracy score
+    `plot_with_lowess_vline`
 
+    Redundant set selection optimization plot. This will be ROC AUC for multiple
+    classification (3+), NMI for binary classification, or R2 for regression. The
+    plot returned has fraction and step size as well as lowess smoothed curve and
+    indication of predicted redundant set.
 
-<a id="org2bede4d"></a>
+    **Args:**
 
-### OOB Normalized Mutual Information Score
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   frac: the fraction of the data used when estimating each y-value. default 3/10
+    -   step_size: rate of change step size to analyze for extraction. default 0.05
+    -   classify: is this a classification algorithm. default True
+    -   multi: does this have multiple (3+) classes. default True
 
-`oob_score_nmi`
+    **Yields:**
 
-Calculates the normalized mutual information score from the OOB predictions.
+    -   graph: plot of dRFE with estimated redundant set indicated as well as fraction and set size used. It automatically saves files as pdf, png, and svg
 
-**Args:**
+9.  Plot lowess vline
 
--   estimator: Random forest classifier object
--   Y: a vector of sample labels from training data set
+    `plot_with_lowess_vline`
 
-**Yields:**
+    Plot feature elimination results with the redundant set indicated. This will be
+    ROC AUC for multiple classification (3+), NMI for binary classification, or R2
+    for regression.
 
--   float: normalized mutual information score
+    **Args:**
 
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   frac: the fraction of the data used when estimating each y-value. default 3/10
+    -   step_size: rate of change step size to analyze for extraction. default 0.05
+    -   classify: is this a classification algorithm. default True
+    -   multi: does this have multiple (3+) classes. default True
 
-<a id="org1a39bf3"></a>
+    **Yields:**
 
-### OOB Area Under ROC Curve Score
+    -   graph: plot of dRFE with estimated redundant set indicated, automatically saves files as pdf, png, and svg
 
-`oob_score_roc`
 
-Calculates the area under the ROC curve score for the OOB predictions.
+<a id="org8ecca01"></a>
 
-**Args:**
+### Plotting functions
 
--   estimator: Random forest classifier object
--   Y: a vector of sample labels from training data set
+1.  Save plots
 
-**Yields:**
+    `save_plots`
 
--   float: AUC ROC score
+    This function save plot as svg, png, and pdf with specific label and dimension.
 
+    **Args:**
 
-<a id="org828dfec"></a>
+    -   p: plotnine object
+    -   fn: file name without extensions
+    -   w: width, default 7
+    -   h: height, default 7
 
-### Plot Feature Elimination by Accuracy
+    **Yields:** SVG, PNG, and PDF of plotnine object
 
-`plot_acc`
+2.  Plot dRFE Accuracy
 
-Plot feature elimination results for accuracy.
+    `plot_acc`
 
-**Args:**
+    Plot feature elimination results for accuracy.
 
--   d: feature elimination class dictionary
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
+    **Args:**
 
-**Yields:**
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
 
--   graph: plot of feature by accuracy, automatically saves files as png and svg
+    **Yields:**
 
+    -   graph: plot of feature by accuracy, automatically saves files as pdf, png, and svg
 
-<a id="org075f47f"></a>
+3.  Plot dRFE NMI
 
-### Plot Feature Elimination by NMI
+    `plot_nmi`
 
-`plot_nmi`
+    Plot feature elimination results for normalized mutual information.
 
-Plot feature elimination results for normalized mutual information.
+    **Args:**
 
-**Args:**
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
 
--   d: feature elimination class dictionary
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
+    **Yields:**
 
-**Yields:**
+    -   graph: plot of feature by NMI, automatically saves files as pdf, png, and svg
 
--   graph: plot of feature by NMI, automatically saves files as png and svg
+4.  Plot dRFE ROC AUC
 
+    `plot_roc`
 
-<a id="orgd34b506"></a>
+    Plot feature elimination results for AUC ROC curve.
 
-### Plot Feature Elimination by AUC
+    **Args:**
 
-`plot_roc`
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
 
-Plot feature elimination results for AUC ROC curve.
+    **Yields:**
 
-**Args:**
+    -   graph: plot of feature by AUC, automatically saves files as pdf, png, and svg
 
--   d: feature elimination class dictionary
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
+5.  Plot dRFE R2
 
-**Yields:**
+    `plot_r2`
 
--   graph: plot of feature by AUC, automatically saves files as png and svg
+    Plot feature elimination results for R2 score. Note that this can be negative
+    if model is arbitarily worse.
 
+    **Args:**
 
-<a id="org31603e5"></a>
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
 
-### Feature Elimination Subfunction
+    **Yields:**
 
-`rf_fe`
+    -   graph: plot of feature by R2, automatically saves files as pdf, png, and svg
 
-Iterate over features to by eliminated by step.
+6.  Plot dRFE MSE
 
-**Args:**
+    `plot_mse`
 
--   estimator: Random forest classifier object
--   X: a data frame of training data
--   Y: a vector of sample labels from training data set
--   n<sub>features</sub><sub>iter</sub>: iterator for number of features to keep loop
--   features: a vector of feature names
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
--   RANK: Boolean (True or False)
+    Plot feature elimination results for mean squared error score.
 
-**Yields:**
+    **Args:**
 
--   list: a list with number of features, normalized mutual information score, accuracy score, and array of the indices for features to keep
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
 
+    **Yields:**
 
-<a id="org45393f3"></a>
+    -   graph: plot of feature by mean squared error, automatically saves files as pdf, png, and svg
 
-### Feature Elimination Step
+7.  Plot dRFE Explained Variance
 
-`rf_fe_step`
+    `plot_evar`
 
-Apply random forest to training data, rank features, conduct feature elimination.
+    Plot feature elimination results for explained variance score.
 
-**Args:**
+    **Args:**
 
--   estimator: Random forest classifier object
--   X: a data frame of training data
--   Y: a vector of sample labels from training data set
--   n<sub>features</sub><sub>to</sub><sub>keep</sub>: number of features to keep
--   features: a vector of feature names
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
--   RANK: Boolean (True or False)
+    -   d: feature elimination class dictionary
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
 
-**Yields:**
+    **Yields:**
 
--   dict: a dictionary with number of features, normalized mutual information score, accuracy score, and selected features
+    -   graph: plot of feature by explained variance, automatically saves files as pdf, png, and svg
 
 
-<a id="orgb71b427"></a>
+<a id="org377b1aa"></a>
 
-### Logistic Regression Class
+### Metric functions
 
-`LogisticRegression_FI`
+1.  OOB Prediction
 
-Add feature importance to Logistic Regression class similar to
-random forest output.
+    `oob_predictions`
 
+    Extracts out-of-bag (OOB) predictions from random forest classifier classes.
 
-<a id="org8e341e8"></a>
+    **Args:**
 
-### Developmental Test Set Predictions
+    -   estimator: Random forest classifier object
 
-`dev_predictions`
+    **Yields:**
 
-Extracts predictions using a development fold for logistic
-regression classifier classes.
+    -   vector: OOB predicted labels
 
-**Args:**
+2.  OOB Accuracy Score
 
--   estimator: Logistic regression classifier object
--   X: a data frame of normalized values from developmental dataset
+    `oob_score_accuracy`
 
-**Yields:**
+    Calculates the accuracy score from the OOB predictions.
 
--   vector: Development set predicted labels
+    **Args:**
 
+    -   estimator: Random forest classifier object
+    -   Y: a vector of sample labels from training data set
 
-<a id="org4347e30"></a>
+    **Yields:**
 
-### Developmental Test Set Accuracy Score
+    -   float: accuracy score
 
-`dev_score_acc`
+3.  OOB Normalized Mutual Information Score
 
-Calculates the accuracy score from the developmental dataset
-predictions.
+    `oob_score_nmi`
 
-**Args:**
+    Calculates the normalized mutual information score from the OOB predictions.
 
--   estimator: Random forest classifier object
--   X: a data frame of normalized values from developmental dataset
--   Y: a vector of sample labels from developmental dataset
+    **Args:**
 
-**Yields:**
+    -   estimator: Random forest classifier object
+    -   Y: a vector of sample labels from training data set
 
--   float: accuracy score
+    **Yields:**
 
+    -   float: normalized mutual information score
 
-<a id="org2f60132"></a>
+4.  OOB Area Under ROC Curve Score
 
-### Developmental Test Set NMI Score
+    `oob_score_roc`
 
-`dev_score_nmi`
+    Calculates the area under the ROC curve score for the OOB predictions.
 
-Calculates the normalized mutual information score
-from the developmental dataset predictions.
+    **Args:**
 
-**Args:**
+    -   estimator: Random forest classifier object
+    -   Y: a vector of sample labels from training data set
 
--   estimator: Random forest classifier object
--   X: a data frame of normalized values from developmental dataset
--   Y: a vector of sample labels from developmental dataset
+    **Yields:**
 
-**Yields:**
+    -   float: AUC ROC score
 
--   float: normalized mutual information score
+5.  OOB R2 Score
 
+    `oob_score_r2`
 
-<a id="orgc8af4ad"></a>
+    Calculates the r2 score from the OOB predictions.
 
-### Developmental Test Set ROC Score
+    **Args:**
 
-`dev_score_roc`
+    -   estimator: Random forest regressor object
+    -   Y: a vector of sample labels from training data set
 
-Calculates the area under the ROC curve score
-for the develomental dataset predictions.
+    **Yields:**
 
-**Args:**
+    -   float: r2 score
 
--   estimator: Logistic regression classifier object
--   X: a data frame of normalized values from developmental dataset
--   Y: a vector of sample labels from developmental data set
+6.  OOB Mean Squared Error Score
 
-**Yields:**
+    `oob_score_mse`
 
--   float: AUC ROC score
+    Calculates the mean squared error score from the OOB predictions.
 
+    **Args:**
 
-<a id="orgc36d680"></a>
+    -   estimator: Random forest regressor object
+    -   Y: a vector of sample labels from training data set
 
-### Logistic Regression Feature Elimination Subfunction
+    **Yields:**
 
-`lr_fe`
+    -   float: mean squared error score
 
-Iterate over features to by eliminated by step.
+7.  OOB Explained Variance Score
 
-**Args:**
+    `oob_score_evar`
 
--   estimator: Logistic regression classifier object
--   X: a data frame of training data
--   Y: a vector of sample labels from training data set
--   n<sub>features</sub><sub>iter</sub>: iterator for number of features to keep loop
--   features: a vector of feature names
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
--   dev<sub>size</sub>: developmental test set propotion of training. default '0.20'
--   SEED: random state. default 'True'
--   RANK: run feature ranking. default 'True'
+    Calculates the explained variance score for the OOB predictions.
 
-**Yields:**
+    **Args:**
 
--   list: a list with number of features, normalized mutual information score, accuracy score, auc roc curve and array of the indices for features to keep
+    -   estimator: Random forest regressor object
+    -   Y: a vector of sample labels from training data set
 
+    **Yields:**
 
-<a id="org82e515d"></a>
+    -   float: explained variance score
 
-### Logistic Regression Feature Elimination Step
+8.  Developmental Test Set Predictions
 
-`lr_fe_step`
+    `dev_predictions`
 
-Split training data into developmental dataset and apply
-logistic regression to developmental dataset, rank features,
-and conduct feature elimination, single steps.
+    Extracts predictions using a development fold for linear
+    regressor.
 
-**Args:**
+    **Args:**
 
--   estimator: Logistic regression classifier object
--   X: a data frame of training data
--   Y: a vector of sample labels from training data set
--   n<sub>features</sub><sub>to</sub><sub>keep</sub>: number of features to keep
--   features: a vector of feature names
--   fold: current fold
--   out<sub>dir</sub>: output directory. default '.'
--   dev<sub>size</sub>: developmental size. default '0.20'
--   SEED: random state. default 'True'
--   RANK: run feature ranking. default 'True'
+    -   estimator: Linear model regression classifier object
+    -   X: a data frame of normalized values from developmental dataset
 
-**Yields:**
+    **Yields:**
 
--   dict: a dictionary with number of features, normalized mutual information score, accuracy score, auc roc score and selected features
+    -   vector: Development set predicted labels
+
+9.  Developmental Test Set R2 Score
+
+    `dev_score_r2`
+
+    Calculates the r2 score from the developmental dataset
+    predictions.
+
+    **Args:**
+
+    -   estimator: Linear model regressor object
+    -   X: a data frame of normalized values from developmental dataset
+    -   Y: a vector of sample labels from developmental dataset
+
+    **Yields:**
+
+    -   float: r2 score
+
+10. Developmental Test Set Mean Squared Error Score
+
+    `dev_score_mse`
+
+    Calculates the mean squared error score from the developmental dataset
+    predictions.
+
+    **Args:**
+
+    -   estimator: Linear model regressor object
+    -   X: a data frame of normalized values from developmental dataset
+    -   Y: a vector of sample labels from developmental dataset
+
+    **Yields:**
+
+    -   float: mean squared error score
+
+11. Developmental Test Set Explained Variance Score
+
+    `dev_score_evar`
+
+    Calculates the explained variance score for the develomental dataset predictions.
+
+    **Args:**
+
+    -   estimator: Linear model regression classifier object
+    -   X: a data frame of normalized values from developmental dataset
+    -   Y: a vector of sample labels from developmental data set
+
+    **Yields:**
+
+    -   float: explained variance score
+
+
+<a id="org288aaeb"></a>
+
+### Linear model classes for dRFE
+
+1.  Lasso Class
+
+    `Lasso_RFE`
+
+    Add feature importance to Lasso class similar to
+    random forest output. Modified from Apua Paquola script.
+
+2.  Ridge Class
+
+    `Ridge_RFE`
+
+    Add feature importance to Ridge class similar to
+    random forest output. Modified from Apua Paquola script.
+
+3.  ElasticNet Class
+
+    `ElasticNet_RFE`
+
+    Add feature importance to ElasticNet class similar to
+    random forest output. Modified from Apua Paquola script.
+    This uses cross-validation to chose alpha.
+
+4.  LinearRegression Class
+
+    `LinearRegression_RFE`
+
+    Add feature importance to LinearRegression class similar to
+    random forest output. Modified from Apua Paquola script.
+
+
+<a id="orga29d49b"></a>
+
+### Random forest helper functions
+
+1.  dRFE Subfunction
+
+    `rf_fe`
+
+    Iterate over features to by eliminated by step.
+
+    **Args:**
+
+    -   estimator: Random forest classifier object
+    -   X: a data frame of training data
+    -   Y: a vector of sample labels from training data set
+    -   n_features_iter: iterator for number of features to keep loop
+    -   features: a vector of feature names
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   RANK: Boolean (True or False)
+
+    **Yields:**
+
+    -   list: a list with number of features, normalized mutual information score, accuracy score, and array of the indices for features to keep
+
+2.  dRFE Step function
+
+    `rf_fe_step`
+
+    Apply random forest to training data, rank features, conduct feature elimination.
+
+    **Args:**
+
+    -   estimator: Random forest classifier object
+    -   X: a data frame of training data
+    -   Y: a vector of sample labels from training data set
+    -   n_features_to_keep: number of features to keep
+    -   features: a vector of feature names
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   RANK: Boolean (True or False)
+
+    **Yields:**
+
+    -   dict: a dictionary with number of features, normalized mutual information score, accuracy score, and selected features
+
+
+<a id="orgbda21bf"></a>
+
+### Linear model helper functions
+
+1.  dRFE Subfunction
+
+    `regr_fe`
+
+    Iterate over features to by eliminated by step.
+
+    **Args:**
+
+    -   estimator: regression linear model object
+    -   X: a data frame of training data
+    -   Y: a vector of sample labels from training data set
+    -   n_features_iter: iterator for number of features to keep loop
+    -   features: a vector of feature names
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   dev_size: developmental test set propotion of training
+    -   SEED: random state
+    -   RANK: Boolean (True or False)
+
+    **Yields:**
+
+    -   list: a list with number of features, r2 score, mean square error, expalined variance, and array of the indices for features to keep
+
+2.  dRFE Step function
+
+    `regr_fe_step`
+
+    Split training data into developmental dataset and apply estimator
+    to developmental dataset, rank features, and conduct feature
+    elimination, single steps.
+
+    **Args:**
+
+    -   estimator: regression linear model object
+    -   X: a data frame of training data
+    -   Y: a vector of sample labels from training data set
+    -   n_features_to_keep: number of features to keep
+    -   features: a vector of feature names
+    -   fold: current fold
+    -   out_dir: output directory. default '.'
+    -   dev_size: developmental test set propotion of training
+    -   SEED: random state
+    -   RANK: Boolean (True or False)
+
+    **Yields:**
+
+    -   dict: a dictionary with number of features, r2 score, mean square error, expalined variance, and selected features
