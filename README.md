@@ -1,9 +1,11 @@
-# dRFEtools
+# dRFEtools - dynamic Recursive Feature Elimination
 
-`dRFEtools` is a package for dynamic recursive feature elimination supports random
-forest classification and regresssion, and linear regression models.
+`dRFEtools` is a package for dynamic recursive feature elimination with
+sklearn.
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
+
+Package developed in Python 3.6+.
 
 ## Citation
 If using please cite: XXX.
