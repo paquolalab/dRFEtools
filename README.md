@@ -6,7 +6,7 @@ and linear models (linear, lasso, ridge, and elastic net).
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
-Package developed in Python 3.6+.
+Package developed in Python 3.7+.
 
 This package has several function to run dynamic recursive feature elimination
 (dRFE) for random forest and linear model classifier and regression models. For
