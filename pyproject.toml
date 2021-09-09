@@ -1,6 +1,9 @@
 [tool.poetry]
 name = "dRFEtools"
-version = "0.1.0"
+packages = [
+    {include = "dRFEtools"}
+]
+version = "0.1.1-alpha.0"
 description = "A package for preforming dynamic recursive feature elimination with sklearn."
 authors = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>"]
 license = "GNU General Public License v3 (GPLv3)"
