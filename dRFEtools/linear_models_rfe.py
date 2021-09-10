@@ -13,16 +13,18 @@ __author__ = 'Kynon J Benjamin'
 import numpy as np
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import LassoCV
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import ElasticNetCV
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
-class Lasso_RFE(Lasso):
+class Lasso_RFE(LassoCV):
     """
     Add feature importance to Lasso class similar to
-    random forest output. Modified from Apua Paquola script.
+    random forest output. This has been updated to use
+    CV for alpha tuning.
     """
     def fit(self, *args, **kwargs):
         super(Lasso_RFE, self).fit(*args, **kwargs)
