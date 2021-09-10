@@ -14,6 +14,7 @@ import numpy as np
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import LassoCV
+from sklearn.linear_model import RidgeCV
 from sklearn.linear_model import ElasticNet
 from sklearn.linear_model import ElasticNetCV
 from sklearn.linear_model import LinearRegression
@@ -31,10 +32,11 @@ class Lasso_RFE(LassoCV):
         self.feature_importances_ = np.abs(self.coef_).flatten()
 
 
-class Ridge_RFE(Ridge):
+class Ridge_RFE(RidgeCV):
     """
     Add feature importance to Ridge class similar to
-    random forest output. Modified from Apua Paquola script.
+    random forest output. This has been updated to use
+    CV for alpha tuning.
     """
     def fit(self, *args, **kwargs):
         super(Ridge_RFE, self).fit(*args, **kwargs)
