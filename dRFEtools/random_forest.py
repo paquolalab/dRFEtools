@@ -26,6 +26,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import explained_variance_score
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import normalized_mutual_info_score
 
 
