@@ -17,6 +17,7 @@ from .rank_function import features_rank_fnc
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import explained_variance_score
+from sklearn.inspection import permutation_importance
 
 
 def dev_predictions(estimator, X):
@@ -110,7 +111,9 @@ def regr_fe_step(estimator, X, Y, n_features_to_keep, features,
     assert n_features_to_keep <= X1.shape[1]
     estimator.fit(X1, Y1)
     test_indices = np.array(range(X1.shape[1]))
-    rank = test_indices[np.argsort(estimator.feature_importances_)]
+    res = permutation_importance(estimator, X2, Y2, n_jobs=-1, random_state=13)
+    #rank = test_indices[np.argsort(estimator.feature_importances_)]
+    rank = test_indices[res.importances_mean.argsort()]
     rank = rank[::-1] # reverse sort
     selected = rank[0:n_features_to_keep]
     features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK)

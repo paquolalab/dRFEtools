@@ -168,7 +168,9 @@ def rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
     assert n_features_to_keep <= X.shape[1]
     estimator.fit(X, Y)
     test_indices = np.array(range(X.shape[1]))
-    rank = test_indices[np.argsort(estimator.feature_importances_)]
+    res = permutation_importance(estimator, X2, Y2, n_jobs=-1, random_state=13)
+    #rank = test_indices[np.argsort(estimator.feature_importances_)]
+    rank = test_indices[res.importances_mean.argsort()]
     rank = rank[::-1] # reverse sort
     selected = rank[0:n_features_to_keep]
     features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK)
