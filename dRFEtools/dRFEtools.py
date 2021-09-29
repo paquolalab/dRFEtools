@@ -59,8 +59,8 @@ def n_features_iter(nf, keep_rate):
         yield nf
 
 
-def feature_elimination(estimator, X, Y, features, fold, out_dir='.',
-                        elimination_rate=0.2, RANK=True):
+def rf_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
+           RANK=True):
     """
     Runs random forest feature elimination step over iterator process.
 

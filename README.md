@@ -71,7 +71,7 @@ If using please cite: XXX.
 
 1.  dRFE - Random Forest
 
-    `feature_elimination`
+    `rf_rfe`
 
     Runs random forest feature elimination step over iterator process.
 
