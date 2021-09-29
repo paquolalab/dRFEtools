@@ -615,33 +615,39 @@ If using please cite: XXX.
 
 1.  Lasso Class
 
-    `Lasso_RFE`
+    `Lasso` and `LassoCV`
 
     Add feature importance to Lasso class similar to
-    random forest output. Modified from Apua Paquola script.
+    random forest output. LassoCV uses cross-validation for alpha tuning.
 
 2.  Ridge Class
 
-    `Ridge_RFE`
+    `Ridge` and `RidgeCV`
 
     Add feature importance to Ridge class similar to
-    random forest output. Modified from Apua Paquola script.
+    random forest output. LassoCV uses cross-validation for alpha tuning.
 
 3.  ElasticNet Class
 
-    `ElasticNet_RFE`
+    `ElasticNet` and `ElasticNetCV`
 
     Add feature importance to ElasticNet class similar to
-    random forest output. Modified from Apua Paquola script.
-    This uses cross-validation to chose alpha.
+    random forest output. ElasticNetCV uses cross-validation to chose alpha.
 
 4.  LinearRegression Class
 
-    `LinearRegression_RFE`
+    `LinearRegression`
 
     Add feature importance to LinearRegression class similar to
-    random forest output. Modified from Apua Paquola script.
+    random forest output.
 
+5. LogisticRegression
+
+    `LogisticRegression`
+
+    Adds feature importance to LogisticRegression class similar to
+    random forest output. This was originally modified from Apua
+    Paquola script.
 
 <a id="orga29d49b"></a>
 
