@@ -167,18 +167,17 @@ def rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
     dict: a dictionary with number of features, normalized mutual
           information score, accuracy score, auc roc score and selected features
     """
-    kwargs = {'random_state': 13, 'test_size': 0.20}
-    X1, X2, Y1, Y2 = train_test_split(X, Y, **kwargs)
-    assert n_features_to_keep <= X1.shape[1]
-    estimator.fit(X1, Y1)
-    test_indices = np.array(range(X1.shape[1]))
-    res = permutation_importance(estimator, X2, Y2, n_jobs=-1, random_state=13)
-    #rank = test_indices[np.argsort(estimator.feature_importances_)]
-    rank = test_indices[res.importances_mean.argsort()]
+    # kwargs = {'random_state': 13, 'test_size': 0.20}
+    # X1, X2, Y1, Y2 = train_test_split(X, Y, **kwargs)
+    assert n_features_to_keep <= X.shape[1]
+    estimator.fit(X, Y)
+    test_indices = np.array(range(X.shape[1]))
+    #res = permutation_importance(estimator, X2, Y2, n_jobs=-1, random_state=13)
+    #rank = test_indices[res.importances_mean.argsort()]
+    rank = test_indices[np.argsort(estimator.feature_importances_)]
     rank = rank[::-1] # reverse sort
     selected = rank[0:n_features_to_keep]
     features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK)
-    estimator.fit(X, Y)
     if isinstance(estimator, RandomForestClassifier):
         return {'n_features': X.shape[1],
                 'nmi_score': oob_score_nmi(estimator, Y),
