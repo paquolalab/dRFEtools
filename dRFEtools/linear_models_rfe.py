@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This script contains the classes for linear models to use for dynamic recursive
 feature elmination (dRFE). This calculates feature importance from model

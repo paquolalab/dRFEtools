@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This script contains the linear model modification of the original
 random forest feature elimination package. Instead of Out-of-Bag, it creates

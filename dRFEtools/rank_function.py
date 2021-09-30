@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This script ranks features within the feature elimination loop.
 Originally developed by Tarun Katipalli.

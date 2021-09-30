@@ -31,6 +31,7 @@ __author__ = 'Apuã Paquola'
 import numpy as np
 import pandas as pd
 from plotnine import *
+from .svm_models import *
 from .dev_scoring import *
 from .random_forest import *
 from .lowess_redundant import *

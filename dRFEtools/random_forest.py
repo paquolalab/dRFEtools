@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This package has several function to run feature elimination for random forest
 classifier. Specifically, Out-of-Bag (OOB) must be set to True. Three

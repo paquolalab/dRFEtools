@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This script contains functions to calculate redundant features based
 on a lowess fitted curve. Uses a log10 transformation of feature inputs.
