@@ -18,6 +18,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import explained_variance_score
 from sklearn.inspection import permutation_importance
+from sklearn.metrics import normalized_mutual_info_score
+from sklearn.metrics import roc_auc_score, accuracy_score
 
 
 def dev_predictions(estimator, X):
