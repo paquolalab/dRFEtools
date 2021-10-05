@@ -8,6 +8,9 @@ Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
 Package developed in Python 3.7+.
 
+In addition to scikit-learn, `dRFEtools` is also built with NumPy, SciPy,
+Pandas, matplotlib, plotnine, and statsmodels.
+
 This package has several function to run dynamic recursive feature elimination
 (dRFE) for random forest and linear model classifier and regression models. For
 random forest, it assumes Out-of-Bag (OOB) is set to True. For linear models,
@@ -43,8 +46,9 @@ The package has been split in to three additional scripts for:
     3.  [Plotting functions](#org8ecca01)
     4.  [Metric functions](#org377b1aa)
     5.  [Linear model classes for dRFE](#org288aaeb)
-    6.  [Random forest helper functions](#orga29d49b)
-    7.  [Linear model helper functions](#orgbda21bf)
+    6.  [SVM model classes for dRFE](#org1313shi)
+    7.  [Random forest helper functions](#orga29d49b)
+    8.  [Linear model helper functions](#orgbda21bf)
 
 <a id="org7b64d47"></a>
 
@@ -99,7 +103,7 @@ If using please cite: XXX.
 
     **Args:**
 
-    -   estimator: regression linear model object
+    -   estimator: regressor or classifier linear model object
     -   X: a data frame of training data
     -   Y: a vector of sample labels from training data set
     -   features: a vector of feature names
@@ -600,7 +604,7 @@ If using please cite: XXX.
 
     **Args:**
 
-    -   estimator: Linear model regression classifier object
+    -   estimator: Linear model regressor object
     -   X: a data frame of normalized values from developmental dataset
     -   Y: a vector of sample labels from developmental data set
 
@@ -608,6 +612,53 @@ If using please cite: XXX.
 
     -   float: explained variance score
 
+12.  DEV Accuracy Score
+
+    `dev_score_accuracy`
+
+    Calculates the accuracy score from the DEV predictions.
+
+    **Args:**
+
+    -   estimator: Linear model classifier object
+    -   X: a data frame of normalized values from developmental dataset
+    -   Y: a vector of sample labels from training data set
+
+    **Yields:**
+
+    -   float: accuracy score
+
+13.  DEV Normalized Mutual Information Score
+
+    `dev_score_nmi`
+
+    Calculates the normalized mutual information score from the DEV predictions.
+
+    **Args:**
+
+    -   estimator: Linear model classifier object
+    -   X: a data frame of normalized values from developmental dataset
+    -   Y: a vector of sample labels from training data set
+
+    **Yields:**
+
+    -   float: normalized mutual information score
+
+14.  DEV Area Under ROC Curve Score
+
+    `dev_score_roc`
+
+    Calculates the area under the ROC curve score for the DEV predictions.
+
+    **Args:**
+
+    -   estimator: Linear model classifier object
+    -   X: a data frame of normalized values from developmental dataset
+    -   Y: a vector of sample labels from training data set
+
+    **Yields:**
+
+    -   float: AUC ROC score
 
 <a id="org288aaeb"></a>
 
@@ -648,6 +699,38 @@ If using please cite: XXX.
     Adds feature importance to LogisticRegression class similar to
     random forest output. This was originally modified from Apua
     Paquola script.
+
+<a id="org1313shi"></a>
+
+### SVM model classes for dRFE
+
+1.  LinearSVC Class
+
+    `LinearSVC`
+
+    Add feature importance to linear SVC class similar to
+    random forest output.
+
+2.  LinearSVR Class
+
+    `LinearSVR`
+
+    Add feature importance to linear SVR class similar to
+    random forest output.
+
+3.  SGDClassifier Class
+
+    `SGDClassifier`
+
+    Add feature importance to stochastic gradient descent classification
+    class similar to random forest output.
+
+4.  SGDRegressor Class
+
+    `SGDRegressor`
+
+    Add feature importance to stochastic gradient descent regression
+    class similar to random forest output.
 
 <a id="orga29d49b"></a>
 
@@ -708,7 +791,7 @@ If using please cite: XXX.
 
     **Args:**
 
-    -   estimator: regression linear model object
+    -   estimator: regressor or classifier linear model object
     -   X: a data frame of training data
     -   Y: a vector of sample labels from training data set
     -   n_features_iter: iterator for number of features to keep loop
@@ -733,7 +816,7 @@ If using please cite: XXX.
 
     **Args:**
 
-    -   estimator: regression linear model object
+    -   estimator: regressor or classifier linear model object
     -   X: a data frame of training data
     -   Y: a vector of sample labels from training data set
     -   n_features_to_keep: number of features to keep

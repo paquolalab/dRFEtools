@@ -42,6 +42,7 @@ def dev_score_roc(estimator, X, Y):
 
     Args:
     estimator: linear model classifier object
+    X: a data frame of normalized values from developmental dataset
     Y: a vector of sample labels from training data set
 
     Yields:
@@ -63,6 +64,7 @@ def dev_score_nmi(estimator, X, Y):
 
     Args:
     estimator: linear model classifier object
+    X: a data frame of normalized values from developmental dataset
     Y: a vector of sample labels from training data set
 
     Yields:
@@ -79,6 +81,7 @@ def dev_score_accuracy(estimator, X, Y):
 
     Args:
     estimator: linear model classifier object
+    X: a data frame of normalized values from developmental dataset
     Y: a vector of sample labels from training data set
 
     Yields:
@@ -94,6 +97,7 @@ def dev_score_r2(estimator, X, Y):
 
     Args:
     estimator: linear model regressor object
+    X: a data frame of normalized values from developmental dataset
     Y: a vector of sample labels from training data set
 
     Yields:
@@ -109,6 +113,7 @@ def dev_score_mse(estimator, X, Y):
 
     Args:
     estimator: linear model regressor object
+    X: a data frame of normalized values from developmental dataset
     Y: a vector of sample labels from training data set
 
     Yields:
@@ -124,6 +129,7 @@ def dev_score_evar(estimator, X, Y):
 
     Args:
     estimator: linear model regressor object
+    X: a data frame of normalized values from developmental dataset
     Y: a vector of sample labels from training data set
 
     Yields:
