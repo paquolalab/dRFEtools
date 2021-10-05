@@ -62,10 +62,10 @@ def oob_score_roc(estimator, Y):
     """
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.oob_decision_function_
-        kwargs = {'multi_class': 'ovr'}
+        kwargs = {'multi_class': 'ovr', "average": "weighted"}
     else:
         labels_pred = oob_predictions(estimator)
-        kwargs = {}
+        kwargs = {"average": "weighted"}
     return roc_auc_score(Y, labels_pred, **kwargs)
 
 
@@ -217,5 +217,5 @@ def rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
         else:
             yield p['n_features'], p['r2_score'], p['mse_score'], p['explain_var'], indices
         indices = indices[p['selected']]
-        X = X[:, p['selected']]
+        X = X.iloc[:, p['selected']]
         features = features[p['selected']]

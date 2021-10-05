@@ -161,6 +161,8 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.05,
     df_elim = pd.DataFrame({'X': x, 'Y': y})
     _,lo = extract_max_lowess(d, frac, multi)
     _,l1 = extract_redundant_lowess(d, frac, step_size, multi)
+    plt.clf()
+    f1 = plt.figure()
     plt.plot(x, y, 'o', label="dRFE")
     plt.plot(pd.DataFrame(z)[0], pd.DataFrame(z)[1], '-', label="Lowess")
     plt.vlines(lo, ymin=np.min(y), ymax=np.max(y), colors='b',

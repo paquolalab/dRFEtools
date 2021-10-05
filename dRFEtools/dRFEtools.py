@@ -98,7 +98,7 @@ def dev_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     process assuming developmental set is needed.
 
     Args:
-    estimator: regression linear model object
+    estimator: classifier or regression linear model object
     X: a data frame of training data
     Y: a vector of sample labels from training data set
     features: a vector of feature names
