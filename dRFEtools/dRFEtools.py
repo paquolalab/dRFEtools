@@ -31,6 +31,7 @@ __author__ = 'Apuã Paquola'
 import numpy as np
 import pandas as pd
 from plotnine import *
+from .svm_models import *
 from .dev_scoring import *
 from .random_forest import *
 from .lowess_redundant import *
@@ -59,8 +60,8 @@ def n_features_iter(nf, keep_rate):
         yield nf
 
 
-def feature_elimination(estimator, X, Y, features, fold, out_dir='.',
-                        elimination_rate=0.2, RANK=True):
+def rf_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
+           RANK=True):
     """
     Runs random forest feature elimination step over iterator process.
 
@@ -97,7 +98,7 @@ def dev_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     process assuming developmental set is needed.
 
     Args:
-    estimator: regression linear model object
+    estimator: classifier or regression linear model object
     X: a data frame of training data
     Y: a vector of sample labels from training data set
     features: a vector of feature names
