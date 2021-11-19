@@ -256,7 +256,7 @@ def plot_evar(d, fold, output_dir):
 
 
 def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
-                           classify=True, multi=True):
+                           classify=True, multi=False):
     if classify:
         if multi:
             label = "ROC AUC"
