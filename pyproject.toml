@@ -3,7 +3,7 @@ name = "dRFEtools"
 packages = [
     {include = "dRFEtools"}
 ]
-version = "0.1.14"
+version = "0.1.15"
 description = "A package for preforming dynamic recursive feature elimination with sklearn."
 authors = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>", "Apuã Paquola <apua.paquola@libd.org>"]
 maintainers = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>"]
