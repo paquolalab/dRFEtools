@@ -256,19 +256,21 @@ def plot_evar(d, fold, output_dir):
 
 
 def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
-                           classify=True, multi=False):
+                           classify=True, multi=False, acc=False):
     if classify:
         if multi:
             label = "ROC AUC"
+        elif acc:
+            label = "Accuracy"
         else:
             label = 'NMI'
     else:
         label = 'R2'
-    _, max_feat_log10 = extract_max_lowess(d, frac, multi)
-    x,y,z,_,_ = cal_lowess(d, frac, multi)
+    _, max_feat_log10 = extract_max_lowess(d, frac, multi, acc)
+    x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
     df_elim = pd.DataFrame({'X': x, 'Y': y})
-    _,lo = extract_max_lowess(d, frac, multi)
-    _,l1 = extract_redundant_lowess(d, frac, step_size, multi)
+    _,lo = extract_max_lowess(d, frac, multi, acc)
+    _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
     gg = ggplot(df_elim, aes(x='X', y='Y')) + geom_point(color='blue') + \
         geom_vline(xintercept=lo, color='blue', linetype='dashed') + \
         geom_vline(xintercept=l1, color='orange', linetype='dashed') +\
