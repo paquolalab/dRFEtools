@@ -19,12 +19,18 @@ import matplotlib.pyplot as plt
 
 @functools.lru_cache()
 def run_lowess(xnew, ynew, frac):
+    """
+    Internal function to run LOWESS.
+    """
     lowess = sm.nonparametric.lowess
     z = lowess(ynew, xnew, frac=frac, it=10)
     return z
 
 
 def array_to_tuple(np_array):
+    """
+    Internal function to convert array to tuple.
+    """
     try:
         return tuple(array_to_tuple(_) for _ in np_array)
     except TypeError:
@@ -32,6 +38,11 @@ def array_to_tuple(np_array):
 
 
 def get_elim_df_ordered(d, multi):
+    """
+    Internal function to extract elimination information from dictionary
+    and convert to data frame. Also performs log10 normalization on
+    features.
+    """
     if multi:
         col = 3
     else:
@@ -115,7 +126,7 @@ def extract_max_lowess(d, frac=3/10, multi=False, acc=False):
     return df_elim[(df_elim['log10_x'] == closest_val)].x.values[0], closest_val
 
 
-def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False,
+def extract_redundant_lowess(d, frac=3/10, step_size=0.02, multi=False,
                              acc=False):
     """
     Extract redundant features based on rate of change of log10
@@ -125,7 +136,10 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False,
     d: Dictionary from dRFE
     frac: Fraction for lowess smoothing. Default 3/10.
     step_size: Rate of change step size to analyze for extraction
-    (default: 0.05)
+    (default: 0.02)
+    multi: Is the target multi-class (boolean). Default False.
+    classify: Is the target classification (boolean). Default True.
+    acc: Use accuracy metric to optimize data (boolean). Default False.
 
     Yields:
     int: number of redundant features
@@ -150,8 +164,25 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False,
     return redundant_feat, redunt_feat_log10
 
 
-def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.05,
+def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
                          classify=True, save_plot=False, multi=False, acc=False):
+    """
+    Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
+
+    Args:
+    d: Dictionary from dRFE
+    frac: Fraction for lowess smoothing. Default 3/10.
+    step_size: Rate of change step size to analyze for extraction
+    (default: 0.02)
+    multi: Is the target multi-class (boolean). Default False.
+    classify: Is the target classification (boolean). Default True.
+    acc: Use accuracy metric to optimize data (boolean). Default False.
+    save_plot: Save the optmization plot (boolean). Default False.
+
+    Yields:
+    Plot of the data with annotation and LOWESS smoothing.
+    Saves plot if specified.
+    """
     if classify:
         if multi:
             label = 'ROC AUC'
