@@ -222,5 +222,8 @@ def regr_fe(estimator, X, Y, n_features_iter, features, fold, out_dir,
         else:
             yield p['n_features'], p['r2_score'], p['mse_score'], p['explain_var'], indices
         indices = indices[p['selected']]
-        X = X.iloc[:, p['selected']]
         features = features[p['selected']]
+        if type(X) == np.ndarray:
+            X = X[:, p['selected']]
+        else:
+            X = X.iloc[:, p['selected']]

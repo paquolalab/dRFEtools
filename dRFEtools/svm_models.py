@@ -20,37 +20,61 @@ class LinearSVC(LinearSVC):
     """
     Add feature importance to linear SVC class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(LinearSVC, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class SGDClassifier(SGDClassifier):
     """
     Add feature importance to stochastic gradient descent classification
     class similar to random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(SGDClassifier, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class LinearSVR(LinearSVR):
     """
     Add feature importance to linear SVR class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(LinearSVR, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class SGDRegressor(SGDRegressor):
     """
     Add feature importance to stochastic gradient descent regression
     class similar to random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(SGDRegressor, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()

@@ -24,10 +24,16 @@ class Lasso(Lasso):
     """
     Add feature importance to Lasso class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(Lasso, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class LassoCV(LassoCV):
@@ -35,20 +41,32 @@ class LassoCV(LassoCV):
     Add feature importance to Lasso class similar to
     random forest output. This has been updated to use
     CV for alpha tuning.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(LassoCV, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class Ridge(Ridge):
     """
     Add feature importance to Ridge class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(Ridge, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class RidgeCV(RidgeCV):
@@ -56,46 +74,72 @@ class RidgeCV(RidgeCV):
     Add feature importance to Ridge class similar to
     random forest output. This has been updated to use
     CV for alpha tuning.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(RidgeCV, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class ElasticNet(ElasticNet):
     """
     Add feature importance to ElasticNet class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(ElasticNet, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class ElasticNetCV(ElasticNetCV):
     """
     Add feature importance to ElasticNet class similar to
     random forest output. This uses cross-validation to chose alpha.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(ElasticNetCV, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class LogisticRegression(LogisticRegression):
     """
     Add feature importance to Logistic Regression class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(LogisticRegression, self).fit(*args, **kwargs)
-        self.feature_importances_ = np.abs(self.coef_).flatten()
+        if self.coef_.ndim == 1:
+            self.feature_importances_ = np.abs(self.coef_).flatten()
+        else:
+            self.feature_importances_ = np.amax(np.abs(self.coef_),
+                                                axis=0).flatten()
 
 
 class LinearRegression(LinearRegression):
     """
     Add feature importance to Linear Regression class similar to
     random forest output.
+
+    Checks dimensions to handle multi-class input.
     """
     def fit(self, *args, **kwargs):
         super(LinearRegression, self).fit(*args, **kwargs)

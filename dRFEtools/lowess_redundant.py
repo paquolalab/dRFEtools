@@ -36,13 +36,13 @@ def get_elim_df_ordered(d, multi):
         col = 3
     else:
         col = 1
-    df_elim = pd.DataFrame([{'x':k, 'y':d[k][col]} for k in d.keys()])\
-                .sort_values('x')
+    df_elim = pd.DataFrame([{'x':k, 'y':d[k][col],
+                             'acc':d[k][2]} for k in d.keys()]).sort_values('x')
     df_elim['log10_x'] = np.log(df_elim['x']+0.5)
     return df_elim
 
 
-def cal_lowess(d, frac, multi):
+def cal_lowess(d, frac, multi, acc):
     """
     Calculated lowess curve.
 
@@ -56,7 +56,10 @@ def cal_lowess(d, frac, multi):
     """
     df_elim = get_elim_df_ordered(d, multi)
     x = df_elim['log10_x'].values
-    y = df_elim['y'].values
+    if acc:
+        y = df_elim['acc'].values
+    else:
+        y = df_elim['y'].values
     tck = interpolate.splrep(x, y, s=0)
     xnew = np.linspace(x.min(), x.max(), num=5001, endpoint=True)
     ynew = interpolate.splev(xnew, tck, der=0)
@@ -64,7 +67,7 @@ def cal_lowess(d, frac, multi):
     return x,y,z,xnew,ynew
 
 
-def cal_lowess_rate_log10(d, frac=3/10, multi=False):
+def cal_lowess_rate_log10(d, frac=3/10, multi=False, acc=False):
     """
     Calculate rate of change on the lowess fitted curve with log10
     transformation.
@@ -77,7 +80,7 @@ def cal_lowess_rate_log10(d, frac=3/10, multi=False):
     data frame: Data frame with n_featuers, lowess value, and
     rate of change (DxDy)
     """
-    _,_,z,_,_ = cal_lowess(d, frac, multi)
+    _,_,z,_,_ = cal_lowess(d, frac, multi, acc)
     dfz = pd.DataFrame(z)
     list_values = []
     for xx in range(z.shape[0]-1):
@@ -90,7 +93,7 @@ def cal_lowess_rate_log10(d, frac=3/10, multi=False):
     return pts
 
 
-def extract_max_lowess(d, frac=3/10, multi=False):
+def extract_max_lowess(d, frac=3/10, multi=False, acc=False):
     """
     Extract max features based on rate of change of log10
     transformed lowess fit curve.
@@ -102,7 +105,7 @@ def extract_max_lowess(d, frac=3/10, multi=False):
     Yields:
     int: number of redundant features
     """
-    _,_,z,xnew,ynew = cal_lowess(d, frac, multi)
+    _,_,z,xnew,ynew = cal_lowess(d, frac, multi, acc)
     df_elim = get_elim_df_ordered(d, multi)
     df_lowess = pd.DataFrame({'X': xnew, 'Y': ynew,
                               'xprime': pd.DataFrame(z)[0],
@@ -112,7 +115,8 @@ def extract_max_lowess(d, frac=3/10, multi=False):
     return df_elim[(df_elim['log10_x'] == closest_val)].x.values[0], closest_val
 
 
-def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False):
+def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False,
+                             acc=False):
     """
     Extract redundant features based on rate of change of log10
     transformed lowess fit curve.
@@ -126,12 +130,12 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False):
     Yields:
     int: number of redundant features
     """
-    _,_,z,xnew,ynew = cal_lowess(d, frac, multi)
+    _,_,z,xnew,ynew = cal_lowess(d, frac, multi, acc)
     df_elim = get_elim_df_ordered(d, multi)
     df_lowess = pd.DataFrame({'X': xnew, 'Y': ynew,
                               'xprime': pd.DataFrame(z)[0],
                               'yprime': pd.DataFrame(z)[1]})
-    dxdy = cal_lowess_rate_log10(d, frac, multi)
+    dxdy = cal_lowess_rate_log10(d, frac, multi, acc)
     dxdy = dxdy[(dxdy.LOWESS >= max(dxdy.LOWESS) - np.std(dxdy.LOWESS))].copy()
     local_peak = []
     for yy in range(1, dxdy.shape[0]):
@@ -147,20 +151,22 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.05, multi=False):
 
 
 def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.05,
-                         classify=True, save_plot=False, multi=False):
+                         classify=True, save_plot=False, multi=False, acc=False):
     if classify:
         if multi:
             label = 'ROC AUC'
+        elif acc:
+            label = "Accuracy"
         else:
             label = 'NMI'
     else:
         label = 'R2'
     title = 'Fraction: %.2f, Step Size: %.2f' % (frac, step_size)
-    _, max_feat_log10 = extract_max_lowess(d, frac, multi)
-    x,y,z,_,_ = cal_lowess(d, frac, multi)
+    _, max_feat_log10 = extract_max_lowess(d, frac, multi, acc)
+    x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
     df_elim = pd.DataFrame({'X': x, 'Y': y})
-    _,lo = extract_max_lowess(d, frac, multi)
-    _,l1 = extract_redundant_lowess(d, frac, step_size, multi)
+    _,lo = extract_max_lowess(d, frac, multi, acc)
+    _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
     plt.clf()
     f1 = plt.figure()
     plt.plot(x, y, 'o', label="dRFE")
