@@ -165,7 +165,8 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.02, multi=False,
 
 
 def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
-                         classify=True, save_plot=False, multi=False, acc=False):
+                         classify=True, save_plot=False, multi=False, acc=False,
+                         log=True, print_out=True):
     """
     Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
 
@@ -178,6 +179,8 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     classify: Is the target classification (boolean). Default True.
     acc: Use accuracy metric to optimize data (boolean). Default False.
     save_plot: Save the optmization plot (boolean). Default False.
+    log: Plot with log transformation (boolean). Default True.
+    print_out: Print to screen (boolean). Default True.
 
     Yields:
     Plot of the data with annotation and LOWESS smoothing.
@@ -193,11 +196,14 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     else:
         label = 'R2'
     title = 'Fraction: %.2f, Step Size: %.2f' % (frac, step_size)
-    _, max_feat_log10 = extract_max_lowess(d, frac, multi, acc)
     x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
     df_elim = pd.DataFrame({'X': x, 'Y': y})
-    _,lo = extract_max_lowess(d, frac, multi, acc)
-    _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    if log:
+        _,lo = extract_max_lowess(d, frac, multi, acc)
+        _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    else:
+        lo,_ = extract_max_lowess(d, frac, multi, acc)
+        l1,_ = extract_redundant_lowess(d, frac, step_size, multi, acc)
     plt.clf()
     f1 = plt.figure()
     plt.plot(x, y, 'o', label="dRFE")
@@ -207,11 +213,13 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     plt.vlines(l1, ymin=np.min(y), ymax=np.max(y),
                colors='orange', linestyles='--',
                label='Redundant Features')
-    plt.xscale('log')
-    plt.xlabel('log10(N Features)')
-    plt.ylabel(label)
-    plt.legend(loc='best')
-    plt.title(title)
+    if log:
+        plt.xscale('log')
+        plt.xlabel('log(N Features)')
+    else:
+        plt.xscale('linear')
+        plt.xlabel('N Features')        
+    plt.ylabel(label); plt.legend(loc='best'); plt.title(title)
     if save_plot:
         plt.savefig("%s/optimize_lowess_%s_frac%.2f_step_%.2f_%s.png" %
                     (output_dir, fold, frac, step_size, label.replace(" ", "_")))
@@ -219,4 +227,5 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
                     (output_dir, fold, frac, step_size, label.replace(" ", "_")))
         plt.savefig("%s/optimize_lowess_%s_frac%.2f_step_%.2f_%s.svg" %
                     (output_dir, fold, frac, step_size, label.replace(" ", "_")))
-    plt.show()
+    if print_out:
+        plt.show()
