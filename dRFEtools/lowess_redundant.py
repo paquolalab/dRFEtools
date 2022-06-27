@@ -202,6 +202,7 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
         _,lo = extract_max_lowess(d, frac, multi, acc)
         _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
     else:
+        df_elim['X'] = np.exp(df_elim['X']) - 0.5 # transforms to linear scale
         lo,_ = extract_max_lowess(d, frac, multi, acc)
         l1,_ = extract_redundant_lowess(d, frac, step_size, multi, acc)
     plt.clf()
