@@ -197,29 +197,28 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
         label = 'R2'
     title = 'Fraction: %.2f, Step Size: %.2f' % (frac, step_size)
     x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
-    df_elim = pd.DataFrame({'X': x, 'Y': y})
-    if log:
-        _,lo = extract_max_lowess(d, frac, multi, acc)
-        _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
-    else:
-        df_elim['X'] = np.exp(df_elim['X']) - 0.5 # transforms to linear scale
-        lo,_ = extract_max_lowess(d, frac, multi, acc)
-        l1,_ = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    # if log:
+    #     df_elim = pd.DataFrame({'X': x, 'Y': y})
+    #     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
+    #     _,lo = extract_max_lowess(d, frac, multi, acc)
+    #     _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    # else:
+    # transforms to linear scale, fixes plotting bug
+    df_elim = pd.DataFrame({'X': np.exp(x) - 0.5, 'Y': y})
+    lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
+    lowess_df.loc[:,"X0"] = np.exp(lowess_df["X0"]) - 0.5
+    lo,_ = extract_max_lowess(d, frac, multi, acc)
+    l1,_ = extract_redundant_lowess(d, frac, step_size, multi, acc)
     plt.clf()
     f1 = plt.figure()
-    plt.plot(x, y, 'o', label="dRFE")
-    plt.plot(pd.DataFrame(z)[0], pd.DataFrame(z)[1], '-', label="Lowess")
+    plt.plot(df_elim["X"], df_elim["Y"], 'o', label="dRFE")
+    plt.plot(lowess_df["X0"], lowess_df["Y0"], '-', label="Lowess")
     plt.vlines(lo, ymin=np.min(y), ymax=np.max(y), colors='b',
                linestyles='--', label='Max Features')
     plt.vlines(l1, ymin=np.min(y), ymax=np.max(y),
                colors='orange', linestyles='--',
                label='Redundant Features')
-    if log:
-        plt.xscale('log')
-        plt.xlabel('log(N Features)')
-    else:
-        plt.xscale('linear')
-        plt.xlabel('N Features')        
+    plt.xscale('log'); plt.xlabel('log(N Features)')   
     plt.ylabel(label); plt.legend(loc='best'); plt.title(title)
     if save_plot:
         plt.savefig("%s/optimize_lowess_%s_frac%.2f_step_%.2f_%s.png" %
