@@ -9,21 +9,20 @@ Developed by Kynon Jade Benjamin.
 
 __author__ = 'Kynon J Benjamin'
 
-import functools
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from scipy import interpolate
+from functools import lru_cache
 import matplotlib.pyplot as plt
 
 
-@functools.lru_cache()
 def run_lowess(xnew, ynew, frac):
     """
     Internal function to run LOWESS.
     """
     lowess = sm.nonparametric.lowess
-    z = lowess(ynew, xnew, frac=frac, it=10)
+    z = lowess(ynew, xnew, frac=frac, it=20)
     return z
 
 
@@ -92,15 +91,9 @@ def cal_lowess_rate_log10(d, frac=3/10, multi=False, acc=False):
     rate of change (DxDy)
     """
     _,_,z,_,_ = cal_lowess(d, frac, multi, acc)
-    dfz = pd.DataFrame(z)
-    list_values = []
-    for xx in range(z.shape[0]-1):
-        dx = dfz.iloc[xx, 0] - dfz.iloc[xx+1, 0]
-        dy = dfz.iloc[xx, 1] - dfz.iloc[xx+1, 1]
-        list_values.append(dx/dy)
-    pts = dfz.rename(columns={0:'Features', 1:'LOWESS'})
-    pts = pts.drop(pts.index[0])
-    pts['DxDy'] = list_values
+    dfz = pd.DataFrame(z, columns=["Features", "LOWESS"])
+    pts = dfz.drop(0)
+    pts['DxDy'] = np.diff(dfz.Features) / np.diff(dfz.LOWESS)
     return pts
 
 
@@ -166,7 +159,7 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.02, multi=False,
 
 def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
                          classify=True, save_plot=False, multi=False, acc=False,
-                         log=True, print_out=True):
+                         print_out=True):
     """
     Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
 
@@ -179,7 +172,6 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     classify: Is the target classification (boolean). Default True.
     acc: Use accuracy metric to optimize data (boolean). Default False.
     save_plot: Save the optmization plot (boolean). Default False.
-    log: Plot with log transformation (boolean). Default True.
     print_out: Print to screen (boolean). Default True.
 
     Yields:
@@ -196,19 +188,14 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     else:
         label = 'R2'
     title = 'Fraction: %.2f, Step Size: %.2f' % (frac, step_size)
+    # transform to linear scale
     x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
-    # if log:
-    #     df_elim = pd.DataFrame({'X': x, 'Y': y})
-    #     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
-    #     _,lo = extract_max_lowess(d, frac, multi, acc)
-    #     _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
-    # else:
-    # transforms to linear scale, fixes plotting bug
     df_elim = pd.DataFrame({'X': np.exp(x) - 0.5, 'Y': y})
     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
     lowess_df.loc[:,"X0"] = np.exp(lowess_df["X0"]) - 0.5
     lo,_ = extract_max_lowess(d, frac, multi, acc)
     l1,_ = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    # Plot
     plt.clf()
     f1 = plt.figure()
     plt.plot(df_elim["X"], df_elim["Y"], 'o', label="dRFE")
@@ -218,7 +205,7 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     plt.vlines(l1, ymin=np.min(y), ymax=np.max(y),
                colors='orange', linestyles='--',
                label='Redundant Features')
-    plt.xscale('log'); plt.xlabel('log(N Features)')   
+    plt.xscale('log'); plt.xlabel('log(N Features)')
     plt.ylabel(label); plt.legend(loc='best'); plt.title(title)
     if save_plot:
         plt.savefig("%s/optimize_lowess_%s_frac%.2f_step_%.2f_%s.png" %
