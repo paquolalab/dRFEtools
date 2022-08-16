@@ -54,7 +54,9 @@ The package has been split in to three additional scripts for:
 
 ## Citation
 
-If using please cite: [![DOI](https://zenodo.org/badge/402494754.svg)](https://zenodo.org/badge/latestdoi/402494754).
+If using please cite the following:
+Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
+[![DOI](https://zenodo.org/badge/402494754.svg)](https://zenodo.org/badge/latestdoi/402494754).
 
 
 <a id="org04443e4"></a>
