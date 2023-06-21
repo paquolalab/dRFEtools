@@ -10,12 +10,13 @@ measurements are calculated for feature selection.
 Original author Apua Paquola.
 Edits: Kynon Jade Benjamin
 Feature ranking modified from Tarun Katipalli ranking function.
+
+Additional modification by KJB to replace class definitions of functions.
 """
 
 __author__ = 'Kynon Jade Benjamin'
 
 import numpy as np
-import pandas as pd
 from itertools import chain
 from sklearn.metrics import r2_score
 from sklearn.metrics import roc_auc_score

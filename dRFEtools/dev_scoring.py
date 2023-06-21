@@ -1,7 +1,7 @@
 """
-This script contains the linear model modification of the original
-random forest feature elimination package. Instead of Out-of-Bag, it creates
-a developmental test set from the training data.
+This script contains the feature elimination step using a
+validation set (developmental) to train the dynamic feature
+elimination.
 
 Developed by Kynon Jade Benjamin.
 """
@@ -9,7 +9,6 @@ Developed by Kynon Jade Benjamin.
 __author__ = 'Kynon J Benjamin'
 
 import numpy as np
-import pandas as pd
 from itertools import chain
 from sklearn.metrics import r2_score
 from sklearn.base import is_classifier
@@ -20,6 +19,21 @@ from sklearn.metrics import explained_variance_score
 from sklearn.inspection import permutation_importance
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.metrics import roc_auc_score, accuracy_score
+
+
+def cal_feature_imp(estimator):
+    """
+    Adds feature importance to a scikit-learn estimator. This is similar
+    to random forest output feature importances output.
+
+    This function also checks dimensions to handle multi-class inputs.
+    """
+    if estimator.coef_.ndim == 1:
+        estimator.feature_importances_ = np.abs(estimator.coef_).flatten()
+    else:
+        estimator.feature_importances_ = np.amax(np.abs(estimator.coef_),
+                                                 axis=0).flatten()
+    return estimator
 
 
 def dev_predictions(estimator, X):
@@ -174,6 +188,7 @@ def regr_fe_step(estimator, X, Y, n_features_to_keep, features,
     test_indices = np.array(range(X1.shape[1]))
     #res = permutation_importance(estimator, X2, Y2, n_jobs=-1, random_state=13)
     #rank = test_indices[res.importances_mean.argsort()]
+    estimator = cal_feature_imp(estimator)
     rank = test_indices[np.argsort(estimator.feature_importances_)]
     rank = rank[::-1] # reverse sort
     selected = rank[0:n_features_to_keep]
