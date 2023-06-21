@@ -1,8 +1,8 @@
 """
-This script contains functions to calculate redundant features based
-on a lowess fitted curve. Uses a log10 transformation of feature inputs.
-Also contains the optimization plot function for manual parameter
-optimization for lowess.
+This script contains functions to calculate core + peripheral features
+based on a lowess fitted curve. Uses a log10 transformation of feature
+inputs. Also contains the optimization plot function for manual
+parameter optimization for lowess.
 
 Developed by Kynon Jade Benjamin.
 """
@@ -106,7 +106,7 @@ def extract_max_lowess(d, frac=3/10, multi=False, acc=False):
     frac: Fraction for lowess smoothing. Default 3/10.
 
     Yields:
-    int: number of redundant features
+    int: number of peripheral features
     """
     _,_,z,xnew,ynew = cal_lowess(d, frac, multi, acc)
     df_elim = get_elim_df_ordered(d, multi)
@@ -118,10 +118,10 @@ def extract_max_lowess(d, frac=3/10, multi=False, acc=False):
     return df_elim[(df_elim['log10_x'] == closest_val)].x.values[0], closest_val
 
 
-def extract_redundant_lowess(d, frac=3/10, step_size=0.02, multi=False,
+def extract_peripheral_lowess(d, frac=3/10, step_size=0.02, multi=False,
                              acc=False):
     """
-    Extract redundant features based on rate of change of log10
+    Extract peripheral features based on rate of change of log10
     transformed lowess fit curve.
 
     Args:
@@ -134,7 +134,7 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.02, multi=False,
     acc: Use accuracy metric to optimize data (boolean). Default False.
 
     Yields:
-    int: number of redundant features
+    int: number of peripheral features
     """
     _,_,z,xnew,ynew = cal_lowess(d, frac, multi, acc)
     df_elim = get_elim_df_ordered(d, multi)
@@ -152,8 +152,8 @@ def extract_redundant_lowess(d, frac=3/10, step_size=0.02, multi=False,
     peaks = dxdy[local_peak]
     val = df_lowess[(df_lowess['xprime'] == max(peaks.Features))].X.values
     redunt_feat_log10 = min(df_elim['log10_x'].values, key=lambda x: abs(x - val))
-    redundant_feat = df_elim[(df_elim['log10_x'] == redunt_feat_log10)].x.values[0]
-    return redundant_feat, redunt_feat_log10
+    peripheral_feat = df_elim[(df_elim['log10_x'] == redunt_feat_log10)].x.values[0]
+    return peripheral_feat, redunt_feat_log10
 
 
 def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
@@ -193,7 +193,7 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
     lowess_df.loc[:,"X0"] = np.exp(lowess_df["X0"]) - 0.5
     lo,_ = extract_max_lowess(d, frac, multi, acc)
-    l1,_ = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    l1,_ = extract_peripheral_lowess(d, frac, step_size, multi, acc)
     # Plot
     plt.clf()
     f1 = plt.figure()
@@ -203,7 +203,7 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
                linestyles='--', label='Max Features')
     plt.vlines(l1, ymin=np.min(y), ymax=np.max(y),
                colors='orange', linestyles='--',
-               label='Redundant Features')
+               label='Peripheral Features')
     plt.xscale('log'); plt.xlabel('log(N Features)')
     plt.ylabel(label); plt.legend(loc='best'); plt.title(title)
     if save_plot:
