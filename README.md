@@ -40,7 +40,8 @@ The package has been split in to three additional scripts for:
 
 1.  [Citation](#org7b64d47)
 2.  [Installation](#org04443e4)
-3.  [Reference Manual](#org5afd041)
+3.  [Tutorials](#org07777f88)
+4.  [Reference Manual](#org5afd041)
     1.  [dRFEtools main functions](#org6171433)
     2.  [Redundant features functions](#org3cfdf65)
     3.  [Plotting functions](#org8ecca01)
@@ -65,11 +66,18 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 
 `pip install --user dRFEtools`
 
+<a id="org07777f88"></a>
+## Tutorials
+
+Follow [this](https://github.com/LieberInstitute/dRFEtools_manuscript/blob/main/optimization/_m/optimization.ipynb) jupyter notebook for an example on optimization.
+
+The GitHub below has example code for sklearn simulation, biological simulation, and using BrainSEQ Phase 1.
+
+[https://github.com/LieberInstitute/dRFEtools_manuscript](https://github.com/LieberInstitute/dRFEtools_manuscript/tree/main)
 
 <a id="org5afd041"></a>
 
 ## Reference Manual
-
 
 <a id="org6171433"></a>
 
