@@ -3,14 +3,14 @@ name = "dRFEtools"
 packages = [
     {include = "dRFEtools"}
 ]
-version = "0.2.0"
+version = "0.3.0"
 description = "A package for preforming dynamic recursive feature elimination with sklearn."
 authors = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>", "Apuã Paquola <apua.paquola@libd.org>"]
 maintainers = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>"]
 license = "GPL-3.0-only"
 readme = "README.md"
-homepage = "https://github.com/paquolalab/dRFEtools.git"
-repository = "https://github.com/paquolalab/dRFEtools.git"
+homepage = "https://github.com/LieberInstitute/dRFEtools.git"
+repository = "https://github.com/LieberInstitute/dRFEtools.git"
 keywords = ['recursive feature elimination', 'sklearn', 'feature ranking']
 
 [tool.poetry.dependencies]
