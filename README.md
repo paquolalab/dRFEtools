@@ -29,26 +29,25 @@ Regression:
 2.  Explained variance
 3.  Mean squared error
 
-The package has been split in to three additional scripts for:
+The package has been split in to four additional scripts for:
 
-1.  Random forest feature elimination (AP)
-2.  Linear model regression feature elimination (KJB)
+1.  Out-of-bag dynamic RFE metrics (AP)
+2.  Validation set dynamic RFE metrics (KJB)
 3.  Rank features function (TK)
-4.  Lowess redundant selection (KJB)
+4.  Lowess core + peripheral selection (KJB)
 
 # Table of Contents
 
 1.  [Citation](#org7b64d47)
 2.  [Installation](#org04443e4)
-3.  [Reference Manual](#org5afd041)
+3.  [Tutorials](#org07777f88)
+4.  [Reference Manual](#org5afd041)
     1.  [dRFEtools main functions](#org6171433)
-    2.  [Redundant features functions](#org3cfdf65)
+    2.  [Peripheral features functions](#org3cfdf65)
     3.  [Plotting functions](#org8ecca01)
     4.  [Metric functions](#org377b1aa)
-    5.  [Linear model classes for dRFE](#org288aaeb)
-    6.  [SVM model classes for dRFE](#org1313shi)
-    7.  [Random forest helper functions](#orga29d49b)
-    8.  [Linear model helper functions](#orgbda21bf)
+    5.  [Random forest helper functions](#orga29d49b)
+    6.  [Linear model helper functions](#orgbda21bf)
 
 <a id="org7b64d47"></a>
 
@@ -65,11 +64,18 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 
 `pip install --user dRFEtools`
 
+<a id="org07777f88"></a>
+## Tutorials
+
+Follow [this](https://github.com/LieberInstitute/dRFEtools_manuscript/blob/main/optimization/_m/optimization.ipynb) jupyter notebook for an example on optimization.
+
+The GitHub below has example code for sklearn simulation, biological simulation, and using BrainSEQ Phase 1.
+
+[https://github.com/LieberInstitute/dRFEtools_manuscript](https://github.com/LieberInstitute/dRFEtools_manuscript/tree/main)
 
 <a id="org5afd041"></a>
 
 ## Reference Manual
-
 
 <a id="org6171433"></a>
 
@@ -156,9 +162,24 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
     -   int: number of features to keep
 
 
+5.  Calculate feature importance
+
+    `cal_feature_imp`
+
+    Generates feature importance from absolute value of feature weights.
+	
+	**Args:**
+	
+	-  estimator: the estimator to generate feature importance for
+	
+	**Yields:**
+	
+	-  estimator: returns the estimator with feature importance
+
+
 <a id="org3cfdf65"></a>
 
-### Redundant features functions
+### Peripheral features functions
 
 1.  Run lowess
 
@@ -259,11 +280,11 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 
     -   int: number of max features (smallest subset)
 
-7.  Extract redundant lowess
+7.  Extract peripheral lowess
 
-    `extract_redundant_lowess`
+    `extract_peripheral_lowess`
 
-    This function extracts the redundant features based on rate of change of log10
+    This function extracts the peripheral features based on rate of change of log10
     transformed lowess fit curve.
 
     **Args:**
@@ -275,16 +296,16 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 
     **Yields:**
 
-    -   int: number of redundant features
+    -   int: number of peripheral features
 
 8.  Optimize lowess plot
 
     `plot_with_lowess_vline`
 
-    Redundant set selection optimization plot. This will be ROC AUC for multiple
+    Peripheral set selection optimization plot. This will be ROC AUC for multiple
     classification (3+), NMI for binary classification, or R2 for regression. The
     plot returned has fraction and step size as well as lowess smoothed curve and
-    indication of predicted redundant set.
+    indication of predicted peripheral set.
 
     **Args:**
 
@@ -298,13 +319,13 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 
     **Yields:**
 
-    -   graph: plot of dRFE with estimated redundant set indicated as well as fraction and set size used. It automatically saves files as pdf, png, and svg
+    -   graph: plot of dRFE with estimated peripheral set indicated as well as fraction and set size used. It automatically saves files as pdf, png, and svg
 
 9.  Plot lowess vline
 
     `plot_with_lowess_vline`
 
-    Plot feature elimination results with the redundant set indicated. This will be
+    Plot feature elimination results with the peripheral set indicated. This will be
     ROC AUC for multiple classification (3+), NMI for binary classification, or R2
     for regression.
 
@@ -320,7 +341,7 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 
     **Yields:**
 
-    -   graph: plot of dRFE with estimated redundant set indicated, automatically saves files as pdf, png, and svg
+    -   graph: plot of dRFE with estimated peripheral set indicated, automatically saves files as pdf, png, and svg
 
 
 <a id="org8ecca01"></a>
@@ -661,124 +682,6 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
     **Yields:**
 
     -   float: AUC ROC score
-
-<a id="org288aaeb"></a>
-
-### Linear model classes for dRFE
-
-1.  Lasso Class
-
-    `Lasso` and `LassoCV`
-
-    Add feature importance to Lasso class similar to
-    random forest output. LassoCV uses cross-validation for alpha tuning.
-
-2.  Ridge Class
-
-    `Ridge` and `RidgeCV`
-
-    Add feature importance to Ridge class similar to
-    random forest output. LassoCV uses cross-validation for alpha tuning.
-
-3.  ElasticNet Class
-
-    `ElasticNet` and `ElasticNetCV`
-
-    Add feature importance to ElasticNet class similar to
-    random forest output. ElasticNetCV uses cross-validation to chose alpha.
-
-4.  LinearRegression Class
-
-    `LinearRegression`
-
-    Add feature importance to LinearRegression class similar to
-    random forest output.
-
-5. LogisticRegression
-
-    `LogisticRegression`
-
-    Adds feature importance to LogisticRegression class similar to
-    random forest output. This was originally modified from Apua
-    Paquola script.
-
-<a id="org1313shi"></a>
-
-### SVM model classes for dRFE
-
-1.  LinearSVC Class
-
-    `LinearSVC`
-
-    Add feature importance to linear SVC class similar to
-    random forest output.
-
-2.  LinearSVR Class
-
-    `LinearSVR`
-
-    Add feature importance to linear SVR class similar to
-    random forest output.
-
-3.  SGDClassifier Class
-
-    `SGDClassifier`
-
-    Add feature importance to stochastic gradient descent classification
-    class similar to random forest output.
-
-4.  SGDRegressor Class
-
-    `SGDRegressor`
-
-    Add feature importance to stochastic gradient descent regression
-    class similar to random forest output.
-
-<a id="orga29d49b"></a>
-
-### Random forest helper functions
-
-1.  dRFE Subfunction
-
-    `rf_fe`
-
-    Iterate over features to by eliminated by step.
-
-    **Args:**
-
-    -   estimator: Random forest classifier object
-    -   X: a data frame of training data
-    -   Y: a vector of sample labels from training data set
-    -   n_features_iter: iterator for number of features to keep loop
-    -   features: a vector of feature names
-    -   fold: current fold
-    -   out_dir: output directory. default '.'
-    -   RANK: Boolean (True or False)
-
-    **Yields:**
-
-    -   list: a list with number of features, normalized mutual information score, accuracy score, and array of the indices for features to keep
-
-2.  dRFE Step function
-
-    `rf_fe_step`
-
-    Apply random forest to training data, rank features, conduct feature elimination.
-
-    **Args:**
-
-    -   estimator: Random forest classifier object
-    -   X: a data frame of training data
-    -   Y: a vector of sample labels from training data set
-    -   n_features_to_keep: number of features to keep
-    -   features: a vector of feature names
-    -   fold: current fold
-    -   out_dir: output directory. default '.'
-    -   RANK: Boolean (True or False)
-
-    **Yields:**
-
-    -   dict: a dictionary with number of features, normalized mutual information score, accuracy score, and selected features
 
 
 <a id="orgbda21bf"></a>

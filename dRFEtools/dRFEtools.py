@@ -16,11 +16,11 @@ Regression:
 2. Explained variance
 3. Mean squared error
 
-The package has been split in to three additional scripts for:
-1. Random forest feature elimination (AP)
-2. Linear model regression feature elimination (KJB)
+The package has been split in to four additional scripts for:
+1. Out-of-bag dynamic RFE metrics (AP)
+2. Validation set dynamic RFE metrics (KJB)
 3. Rank features function (TK)
-4. Lowess redundant selection (KJB)
+4. Lowess core + peripheral selection (KJB)
 
 Original author Apuã Paquola (AP).
 Edits and package management by Kynon Jade Benjamin (KJB)
@@ -31,14 +31,12 @@ __author__ = 'Apuã Paquola'
 import numpy as np
 import pandas as pd
 from plotnine import *
-from .svm_models import *
 from .dev_scoring import *
 from .random_forest import *
 from .lowess_redundant import *
-from .linear_models_rfe import *
 from warnings import filterwarnings
 from matplotlib.cbook import mplDeprecation
-from sklearn.metrics import balanced_accuracy_score
+
 filterwarnings("ignore", category=mplDeprecation)
 filterwarnings('ignore', category=UserWarning, module='plotnine.*')
 filterwarnings('ignore', category=DeprecationWarning, module='plotnine.*')
@@ -270,7 +268,7 @@ def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
     x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
     df_elim = pd.DataFrame({'X': x, 'Y': y})
     _,lo = extract_max_lowess(d, frac, multi, acc)
-    _,l1 = extract_redundant_lowess(d, frac, step_size, multi, acc)
+    _,l1 = extract_peripheral_lowess(d, frac, step_size, multi, acc)
     gg = ggplot(df_elim, aes(x='X', y='Y')) + geom_point(color='blue') + \
         geom_vline(xintercept=lo, color='blue', linetype='dashed') + \
         geom_vline(xintercept=l1, color='orange', linetype='dashed') +\
