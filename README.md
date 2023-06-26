@@ -1,12 +1,11 @@
 # dRFEtools - dynamic Recursive Feature Elimination
 
 `dRFEtools` is a package for dynamic recursive feature elimination with
-sklearn. Currently supporting random forest classification and regression,
-and linear models (linear, lasso, ridge, and elastic net).
+sklearn.
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
-Package developed in Python 3.7+.
+Package developed in Python 3.8+.
 
 In addition to scikit-learn, `dRFEtools` is also built with NumPy, SciPy,
 Pandas, matplotlib, plotnine, and statsmodels.
@@ -167,13 +166,13 @@ The GitHub below has example code for sklearn simulation, biological simulation,
     `cal_feature_imp`
 
     Generates feature importance from absolute value of feature weights.
-	
+
 	**Args:**
-	
+
 	-  estimator: the estimator to generate feature importance for
-	
+
 	**Yields:**
-	
+
 	-  estimator: returns the estimator with feature importance
 
 
