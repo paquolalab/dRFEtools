@@ -67,9 +67,12 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 <a id="org07777f88"></a>
 ## Tutorials
 
-Follow [this](https://github.com/LieberInstitute/dRFEtools_manuscript/blob/main/optimization/_m/optimization.ipynb) jupyter notebook for an example on optimization.
+We have two tutorials for [optimization](./examples/optimization.md)
+(version 0.2) and [classification](./examples/classification.md) (version 0.3+).
 
-The GitHub below has example code for sklearn simulation, biological simulation, and using BrainSEQ Phase 1.
+In addition to this, we have example code used in the manuscript for
+scikit-learn simulation, biological simulation, and BrainSEQ Phase 1
+at the link below.
 
 [https://github.com/LieberInstitute/dRFEtools_manuscript](https://github.com/LieberInstitute/dRFEtools_manuscript/tree/main)
 
@@ -162,9 +165,9 @@ The GitHub below has example code for sklearn simulation, biological simulation,
     -   int: number of features to keep
 
 
-5.  Calculate feature importance
+5.  Extract feature importances
 
-    `cal_feature_imp`
+    `_get_feature_importances`
 
     Generates feature importance from absolute value of feature weights.
 
@@ -174,7 +177,7 @@ The GitHub below has example code for sklearn simulation, biological simulation,
 
 	**Yields:**
 
-	-  estimator: returns the estimator with feature importance
+	-  numpy array: returns feature importances as a NumPy array
 
 
 <a id="org3cfdf65"></a>
