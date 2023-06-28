@@ -8,7 +8,8 @@ Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 Package developed in Python 3.8+.
 
 In addition to scikit-learn, `dRFEtools` is also built with NumPy, SciPy,
-Pandas, matplotlib, plotnine, and statsmodels.
+Pandas, matplotlib, plotnine, and statsmodels. Currently, dynamic RFE supports
+models with `coef_` or `feature_importances_` attribute.
 
 This package has several function to run dynamic recursive feature elimination
 (dRFE) for random forest and linear model classifier and regression models. For
@@ -30,7 +31,7 @@ Regression:
 
 The package has been split in to four additional scripts for:
 
-1.  Out-of-bag dynamic RFE metrics (AP)
+1.  Out-of-bag dynamic RFE metrics (AP/KJB)
 2.  Validation set dynamic RFE metrics (KJB)
 3.  Rank features function (TK)
 4.  Lowess core + peripheral selection (KJB)
