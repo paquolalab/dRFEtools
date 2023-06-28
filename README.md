@@ -1,15 +1,15 @@
 # dRFEtools - dynamic Recursive Feature Elimination
 
 `dRFEtools` is a package for dynamic recursive feature elimination with
-sklearn. Currently supporting random forest classification and regression,
-and linear models (linear, lasso, ridge, and elastic net).
+sklearn.
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
-Package developed in Python 3.7+.
+Package developed in Python 3.8+.
 
 In addition to scikit-learn, `dRFEtools` is also built with NumPy, SciPy,
-Pandas, matplotlib, plotnine, and statsmodels.
+Pandas, matplotlib, plotnine, and statsmodels. Currently, dynamic RFE supports
+models with `coef_` or `feature_importances_` attribute.
 
 This package has several function to run dynamic recursive feature elimination
 (dRFE) for random forest and linear model classifier and regression models. For
@@ -31,7 +31,7 @@ Regression:
 
 The package has been split in to four additional scripts for:
 
-1.  Out-of-bag dynamic RFE metrics (AP)
+1.  Out-of-bag dynamic RFE metrics (AP/KJB)
 2.  Validation set dynamic RFE metrics (KJB)
 3.  Rank features function (TK)
 4.  Lowess core + peripheral selection (KJB)
@@ -67,9 +67,12 @@ Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
 <a id="org07777f88"></a>
 ## Tutorials
 
-Follow [this](https://github.com/LieberInstitute/dRFEtools_manuscript/blob/main/optimization/_m/optimization.ipynb) jupyter notebook for an example on optimization.
+We have two tutorials for [optimization](./examples/optimization.md)
+(version 0.2) and [classification](./examples/classification.md) (version 0.3+).
 
-The GitHub below has example code for sklearn simulation, biological simulation, and using BrainSEQ Phase 1.
+In addition to this, we have example code used in the manuscript for
+scikit-learn simulation, biological simulation, and BrainSEQ Phase 1
+at the link below.
 
 [https://github.com/LieberInstitute/dRFEtools_manuscript](https://github.com/LieberInstitute/dRFEtools_manuscript/tree/main)
 
@@ -162,19 +165,19 @@ The GitHub below has example code for sklearn simulation, biological simulation,
     -   int: number of features to keep
 
 
-5.  Calculate feature importance
+5.  Extract feature importances
 
-    `cal_feature_imp`
+    `_get_feature_importances`
 
     Generates feature importance from absolute value of feature weights.
-	
+
 	**Args:**
-	
+
 	-  estimator: the estimator to generate feature importance for
-	
+
 	**Yields:**
-	
-	-  estimator: returns the estimator with feature importance
+
+	-  numpy array: returns feature importances as a NumPy array
 
 
 <a id="org3cfdf65"></a>

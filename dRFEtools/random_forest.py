@@ -1,7 +1,7 @@
 """
-This package has several function to run feature elimination for random forest
-classifier. Specifically, Out-of-Bag (OOB) must be set to True. Three
-measurements are calculated for feature selection.
+This package has several function to run feature elimination for
+random forest, it will use the out-of-bag (OOB), assuming
+OOB set to True. Three measurements are calculated for feature selection.
 
 1. Normalized mutual information
 2. Accuracy

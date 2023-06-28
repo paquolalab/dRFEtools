@@ -10,6 +10,7 @@ __author__ = 'Kynon J Benjamin'
 
 import numpy as np
 from itertools import chain
+from operator import attrgetter
 from sklearn.metrics import r2_score
 from sklearn.base import is_classifier
 from .rank_function import features_rank_fnc
@@ -21,19 +22,71 @@ from sklearn.metrics import normalized_mutual_info_score
 from sklearn.metrics import roc_auc_score, accuracy_score
 
 
-def cal_feature_imp(estimator):
+def dev_cal_feature_imp(estimator):
     """
     Adds feature importance to a scikit-learn estimator. This is similar
     to random forest output feature importances output.
 
     This function also checks dimensions to handle multi-class inputs.
     """
-    if estimator.coef_.ndim == 1:
-        estimator.feature_importances_ = np.abs(estimator.coef_).flatten()
-    else:
-        estimator.feature_importances_ = np.amax(np.abs(estimator.coef_),
+    if hasattr(estimator, "feature_log_prob_"):
+        prob = np.exp(np.amax(estimator.feature_log_prob_, axis=0))
+        estimator.feature_importances_ = prob.flatten()
+    elif hasattr(estimator, "feature_importances_"):
+        pass
+    elif hasattr(estimator, "coef_"):
+        if estimator.coef_.ndim == 1:
+            estimator.feature_importances_ = np.abs(estimator.coef_).flatten()
+        else:
+            estimator.feature_importances_ = np.amax(np.abs(estimator.coef_),
+                                                     axis=0).flatten()
+    elif hasattr(estimator, "dual_coef_"):
+        estimator.feature_importances_ = np.amax(np.abs(estimator.dual_coef_),
                                                  axis=0).flatten()
+    else:
+        raise AttributeError("model not supported")
     return estimator
+
+
+def _get_feature_importances(estimator):
+    """
+    Retrieve and aggregate (ndim > 1) feature importance
+    from scikit-learn estimator.
+
+    This function also checks dimensions to handle multi-class inputs.
+
+    Parameters
+    ----------
+    estimator : estimator
+        A scikit-learn estimator from which we want to get the feature
+        importances
+
+    Returns
+    -------
+    importances : ndarray of shape (n_features,)
+        The features importances, optionally transformed
+    """
+    if hasattr(estimator, "coef_"):
+        getter = attrgetter("coef_")
+        transform_fnc = "norm"
+    elif hasattr(estimator, "feature_importances_"):
+        getter = attrgetter("feature_importances_")
+        transform_fnc = None
+    else:
+        raise ValueError(
+            f"the underlying estimator {estimator.__class__.__name__} "
+            "should have `coef_` or `features_importances_` attribute."
+        )
+    importances = getter(estimator)
+    if transform_fnc is None:
+        return importances
+    elif transform_fnc == "norm":
+        if importances.ndim == 1:
+            importances = np.abs(importances).flatten()
+        else:
+            importances = np.linalg.norm(importances, axis=0,
+                                         ord=1).flatten()
+    return importances
 
 
 def dev_predictions(estimator, X):
@@ -188,7 +241,7 @@ def regr_fe_step(estimator, X, Y, n_features_to_keep, features,
     test_indices = np.array(range(X1.shape[1]))
     #res = permutation_importance(estimator, X2, Y2, n_jobs=-1, random_state=13)
     #rank = test_indices[res.importances_mean.argsort()]
-    estimator = cal_feature_imp(estimator)
+    estimator.feature_importances_ = _get_feature_importances(estimator)
     rank = test_indices[np.argsort(estimator.feature_importances_)]
     rank = rank[::-1] # reverse sort
     selected = rank[0:n_features_to_keep]
