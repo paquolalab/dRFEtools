@@ -54,8 +54,15 @@ The package has been split in to four additional scripts for:
 ## Citation
 
 If using please cite the following:
-Pre-print DOI: https://doi.org/10.1101/2022.07.27.501227
-[![DOI](https://zenodo.org/badge/402494754.svg)](https://zenodo.org/badge/latestdoi/402494754).
+
+Kynon J M Benjamin, Tarun Katipalli, Apuã C M Paquola, 
+dRFEtools: dynamic recursive feature elimination for omics, 
+Bioinformatics, Volume 39, Issue 8, August 2023, btad513, 
+https://doi.org/10.1093/bioinformatics/btad513
+
+PMID: 37632789
+
+[![DOI](10.1093/bioinformatics/btad513)](10.1093/bioinformatics/btad513).
 
 
 <a id="org04443e4"></a>
