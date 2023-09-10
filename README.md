@@ -62,7 +62,7 @@ https://doi.org/10.1093/bioinformatics/btad513
 
 PMID: 37632789
 
-[![DOI](10.1093/bioinformatics/btad513)](10.1093/bioinformatics/btad513).
+DOI: [(10.1093/bioinformatics/btad513)](10.1093/bioinformatics/btad513).
 
 
 <a id="org04443e4"></a>
