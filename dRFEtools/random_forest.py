@@ -28,12 +28,20 @@ from sklearn.metrics import (
     normalized_mutual_info_score
 )
 from sklearn.model_selection import train_test_split
-from sklearn.inspection import permutation_importance
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from .rank_function import features_rank_fnc
 
+__all__ = [
+    "_rf_fe",
+    "oob_score_r2",
+    "oob_score_nmi",
+    "oob_score_roc",
+    "oob_score_mse",
+    "oob_score_evar",
+    "oob_score_accuracy",
+]
 
-def oob_predictions(estimator):
+def _oob_predictions(estimator):
     """
     Extracts out-of-bag (OOB) predictions from random forest
     classifier classes.
@@ -43,12 +51,18 @@ def oob_predictions(estimator):
 
     Returns:
         vector: OOB predicted labels
+
+    Raises:
+       ValueError: If the estimator is not a RandomForestClassifier or
+                   RandomForestRegressor
     """
     if isinstance(estimator, RandomForestClassifier):
         return estimator.classes_[(estimator.oob_decision_function_[:, 1]
                                    > 0.5).astype(int)]
-    else:
+    elif isinstance(estimator, RandomForestRegressor):
         return estimator.oob_prediction_
+    else:
+        raise ValueError("Estimator must be either RandomForestClassifier or RandomForestRegressor")
 
 
 def oob_score_roc(estimator, Y):
@@ -67,7 +81,7 @@ def oob_score_roc(estimator, Y):
         labels_pred = estimator.oob_decision_function_
         kwargs = {'multi_class': 'ovr', "average": "weighted"}
     else:
-        labels_pred = oob_predictions(estimator)
+        labels_pred = _oob_predictions(estimator)
         kwargs = {"average": "weighted"}
     return roc_auc_score(Y, labels_pred, **kwargs)
 
@@ -84,7 +98,7 @@ def oob_score_nmi(estimator, Y):
     Returns:
         float: normalized mutual information score
     """
-    labels_pred = oob_predictions(estimator)
+    labels_pred = _oob_predictions(estimator)
     return normalized_mutual_info_score(Y, labels_pred,
                                         average_method='arithmetic')
 
@@ -100,7 +114,7 @@ def oob_score_accuracy(estimator, Y):
     Returns:
         float: accuracy score
     """
-    labels_pred = oob_predictions(estimator)
+    labels_pred = _oob_predictions(estimator)
     return accuracy_score(Y, labels_pred)
 
 
@@ -115,7 +129,7 @@ def oob_score_r2(estimator, Y):
     Returns:
         float: R2 score
     """
-    labels_pred = oob_predictions(estimator)
+    labels_pred = _oob_predictions(estimator)
     return r2_score(Y, labels_pred)
 
 
@@ -130,7 +144,7 @@ def oob_score_mse(estimator, Y):
     Returns:
         float: mean square error
     """
-    labels_pred = oob_predictions(estimator)
+    labels_pred = _oob_predictions(estimator)
     return mean_squared_error(Y, labels_pred)
 
 
@@ -145,12 +159,12 @@ def oob_score_evar(estimator, Y):
     Returns:
         float: explained variance score
     """
-    labels_pred = oob_predictions(estimator)
+    labels_pred = _oob_predictions(estimator)
     return explained_variance_score(Y, labels_pred,
                                     multioutput='uniform_average')
 
 
-def rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
+def _rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
                RANK):
     """
     Eliminates features step-by-step.
@@ -167,57 +181,71 @@ def rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
 
     Returns:
         dict: a dictionary containing feature elimination results
+
+    Raises:
+        ValueError: If n_features_to_keep is greater than the number of features in X
     """
-    assert n_features_to_keep <= X.shape[1]
+    if n_features_to_keep > X.shape[1]:
+        raise ValueError("n_features_to_keep cannot be greater than the number of features in X")
+
     estimator.fit(X, Y)
-    test_indices = np.array(range(X.shape[1]))
-    rank = test_indices[np.argsort(estimator.feature_importances_)]
-    rank = rank[::-1] # reverse sort
-    selected = rank[0:n_features_to_keep]
+    feature_importances = estimator.feature_importances_
+    rank = np.argsort(feature_importances)[::-1] # reverse sort
+    selected = rank[:n_features_to_keep]
+
     features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK)
+    result = {
+        'n_features': X.shape[1],
+        'selected': selected
+    }
+
     if isinstance(estimator, RandomForestClassifier):
-        return {'n_features': X.shape[1],
-                'nmi_score': oob_score_nmi(estimator, Y),
-                'accuracy_score': oob_score_accuracy(estimator, Y),
-                'roc_auc_score': oob_score_roc(estimator, Y),
-                'selected': selected
-                }
+        result.update({
+            'nmi_score': oob_score_nmi(estimator, Y),
+            'accuracy_score': oob_score_accuracy(estimator, Y),
+            'roc_auc_score': oob_score_roc(estimator, Y)
+        })
     else:
-        return {'n_features': X.shape[1],
-                'r2_score': oob_score_r2(estimator, Y),
-                'mse_score': oob_score_mse(estimator, Y),
-                'explain_var': oob_score_evar(estimator, Y),
-                'selected': selected
-                }
+        result.update({
+            'r2_score': oob_score_r2(estimator, Y),
+            'mse_score': oob_score_mse(estimator, Y),
+            'explain_var': oob_score_evar(estimator, Y)
+        })
+    return result
 
 
-def rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
+def _rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
     """
     Iterates over features to be eliminated step-by-step.
 
     Args:
         estimator: Random forest classifier or regressor object
-        X: a data frame of training data
-        Y: a vector of sample labels from training data set
+        X: DataFrame or np.ndarray of training data
+        Y: np.ndarray of sample labels from training data set
         n_features_iter: iterator for number of features to keep loop
-        features: a vector of feature names
-        fold: current fold
-        out_dir: output directory. default '.'
-        RANK: Boolean (True/False) to return ranks
+        features: np.ndarray of feature names
+        fold (int): Current fold
+        out_dir (str): Output directory.
+        RANK (bool): Whether to return ranks
 
     Returns:
-        list: list with feature elimination results
+        tuple: Feature elimination results for each iteration
+
+    Raises:
+        ValueError: If X and features have different number of columns
     """
-    indices = np.array(range(X.shape[1]))
+    if X.shape[1] != len(features):
+        raise ValueError("Number of columns in X must match the length of features")
+
+    indices = np.arange(X.shape[1])
+
     for nf in chain(n_features_iter, [1]):
-        p = rf_fe_step(estimator, X, Y, nf, features, fold, out_dir, RANK)
+        p = _rf_fe_step(estimator, X, Y, nf, features, fold, out_dir, RANK)
+
         if isinstance(estimator, RandomForestClassifier):
             yield p['n_features'], p['nmi_score'], p['accuracy_score'], p['roc_auc_score'], indices
         else:
             yield p['n_features'], p['r2_score'], p['mse_score'], p['explain_var'], indices
         indices = indices[p['selected']]
         features = features[p['selected']]
-        if type(X) == np.ndarray:
-            X = X[:, p['selected']]
-        else:
-            X = X.iloc[:, p['selected']]
+        X = X[:, p['selected']] if isinstance(X, np.ndarray) else X.iloc[:, p['selected']]
