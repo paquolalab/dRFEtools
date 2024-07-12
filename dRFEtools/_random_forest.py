@@ -51,7 +51,7 @@ def _oob_predictions(estimator):
         estimator: Random forest classifier or regressor object
 
     Returns:
-        vector: OOB predicted labels
+        np.ndarray: OOB predicted labels
 
     Raises:
        ValueError: If the estimator is not a RandomForestClassifier or
@@ -73,7 +73,7 @@ def oob_score_roc(estimator, Y):
 
     Args:
         estimator: Random forest classifier object
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
 
     Returns:
         float: AUC ROC score
@@ -94,7 +94,7 @@ def oob_score_nmi(estimator, Y):
 
     Args:
         estimator: Random forest classifier object
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
 
     Returns:
         float: normalized mutual information score
@@ -110,7 +110,7 @@ def oob_score_accuracy(estimator, Y):
 
     Args:
         estimator: Random forest classifier object
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
 
     Returns:
         float: accuracy score
@@ -125,7 +125,7 @@ def oob_score_r2(estimator, Y):
 
     Args:
         estimator: Random forest regressor object
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
 
     Returns:
         float: R2 score
@@ -140,7 +140,7 @@ def oob_score_mse(estimator, Y):
 
     Args:
         estimator: Random forest regressor object
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
 
     Returns:
         float: mean square error
@@ -155,7 +155,7 @@ def oob_score_evar(estimator, Y):
 
     Args:
         estimator: Random forest regressor object
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
 
     Returns:
         float: explained variance score
@@ -173,9 +173,9 @@ def _rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
     Args:
         estimator: Random forest classifier object
         X: a data frame of training data
-        Y: a vector of sample labels from training data set
+        Y: np.ndarray of sample labels from training data set
         n_features_to_keep: number of features to keep
-        features: a vector of feature names
+        features: np.ndarray of feature names
         fold: current fold
         out_dir: output directory. default '.'
         RANK: Boolean (True/False) to return ranks
@@ -223,7 +223,7 @@ def _rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
         estimator: Random forest classifier or regressor object
         X: DataFrame or np.ndarray of training data
         Y: np.ndarray of sample labels from training data set
-        n_features_iter: iterator for number of features to keep loop
+        n_features_iter: Iterator for number of features to keep loop
         features: np.ndarray of feature names
         fold (int): Current fold
         out_dir (str): Output directory.

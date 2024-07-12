@@ -31,8 +31,16 @@ __author__ = 'Apuã Paquola'
 import numpy as np
 import pandas as pd
 from plotnine import *
-from .dev_scoring import *
-from .random_forest import (
+from ._dev_scoring import (
+    _regr_fe,
+    dev_score_r2,
+    dev_score_nmi,
+    dev_score_roc,
+    dev_score_mse,
+    dev_score_evar,
+    dev_score_accuracy
+)
+from ._random_forest import (
     _rf_fe,
     oob_score_r2,
     oob_score_nmi,
@@ -41,7 +49,7 @@ from .random_forest import (
     oob_score_evar,
     oob_score_accuracy
 )
-from .lowess_redundant import *
+from ._lowess_redundant import *
 from warnings import filterwarnings
 from matplotlib.cbook import mplDeprecation
 
@@ -122,8 +130,8 @@ def dev_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     d = dict()
     pfirst = None
     keep_rate = 1-elimination_rate
-    for p in regr_fe(estimator, X, Y, n_features_iter(X.shape[1], keep_rate),
-                     features, fold, out_dir, dev_size, SEED, RANK):
+    for p in _regr_fe(estimator, X, Y, n_features_iter(X.shape[1], keep_rate),
+                      features, fold, out_dir, dev_size, SEED, RANK):
         if pfirst is None:
             pfirst = p
         d[p[0]] = p
