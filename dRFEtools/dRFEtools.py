@@ -49,7 +49,12 @@ from ._random_forest import (
     oob_score_evar,
     oob_score_accuracy
 )
-from ._lowess_redundant import *
+from ._lowess_redundant import (
+    _cal_lowess,
+    extract_max_lowess,
+    optimize_lowess_plot,
+    extract_peripheral_lowess
+)
 from warnings import filterwarnings
 from matplotlib.cbook import mplDeprecation
 
@@ -271,17 +276,9 @@ def plot_evar(d, fold, output_dir):
 
 def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
                            classify=True, multi=False, acc=False):
-    if classify:
-        if multi:
-            label = "ROC AUC"
-        elif acc:
-            label = "Accuracy"
-        else:
-            label = 'NMI'
-    else:
-        label = 'R2'
+    label = 'ROC AUC' if classify and multi else 'Accuracy' if classify and acc else 'NMI' if classify else 'R2'
     _, max_feat_log10 = extract_max_lowess(d, frac, multi, acc)
-    x,y,z,_,_ = cal_lowess(d, frac, multi, acc)
+    x,y,z,_,_ = _cal_lowess(d, frac, multi, acc)
     df_elim = pd.DataFrame({'X': x, 'Y': y})
     _,lo = extract_max_lowess(d, frac, multi, acc)
     _,l1 = extract_peripheral_lowess(d, frac, step_size, multi, acc)
@@ -293,17 +290,3 @@ def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
     print(gg)
     save_plot(gg, "%s/%s_log10_dRFE_fold_%d" %
               (output_dir,label.replace(" ", "_"),fold))
-
-# def plot_scores(d, alpha, output_dir):
-#     df_nmi = pd.DataFrame([{'n features':k, 'Score':d[k][1]} for k in d.keys()])
-#     df_nmi['Type'] = 'NMI'
-#     df_acc = pd.DataFrame([{'n features':k, 'Score':d[k][2]} for k in d.keys()])
-#     df_acc['Type'] = 'Acc'
-#     df_roc = pd.DataFrame([{'n features':k, 'Score':d[k][3]} for k in d.keys()])
-#     df_roc['Type'] = 'ROC'
-#     df_elim = pd.concat([df_nmi, df_acc, df_roc], axis=0)
-#     gg = ggplot(df_elim, aes(x='n features', y='Score', color='Type'))\
-#         + geom_point() + scale_x_log10() + theme_light()
-#     gg.save(output_dir+"/scores_wgt_%.2f.png" % (alpha))
-#     gg.save(output_dir+"/scores_wgt_%.2f.svg" % (alpha))
-#     print(gg)
