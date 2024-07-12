@@ -29,7 +29,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from .rank_function import features_rank_fnc
+
+from ._rank_function import features_rank_fnc
 
 __all__ = [
     "_rf_fe",

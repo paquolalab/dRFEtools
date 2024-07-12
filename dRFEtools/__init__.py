@@ -1,6 +1,6 @@
-from .dev_scoring import *
-from .random_forest import *
-from .lowess_redundant import *
+from ._dev_scoring import *
+from ._random_forest import *
+from ._lowess_redundant import *
 
 __version__ = "0.3.4"
 
