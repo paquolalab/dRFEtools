@@ -31,48 +31,39 @@ __author__ = 'Apuã Paquola'
 import numpy as np
 import pandas as pd
 from plotnine import *
-from ._dev_scoring import (
-    _regr_fe,
-    dev_score_r2,
-    dev_score_nmi,
-    dev_score_roc,
-    dev_score_mse,
-    dev_score_evar,
-    dev_score_accuracy
-)
-from ._random_forest import (
-    _rf_fe,
-    oob_score_r2,
-    oob_score_nmi,
-    oob_score_roc,
-    oob_score_mse,
-    oob_score_evar,
-    oob_score_accuracy
-)
+from warnings import filterwarnings
+from matplotlib.cbook import mplDeprecation
+
+from ._dev_scoring import _regr_fe
+from ._random_forest import _rf_fe
 from ._lowess_redundant import (
     _cal_lowess,
     extract_max_lowess,
     optimize_lowess_plot,
     extract_peripheral_lowess
 )
-from warnings import filterwarnings
-from matplotlib.cbook import mplDeprecation
 
 filterwarnings("ignore", category=mplDeprecation)
 filterwarnings('ignore', category=UserWarning, module='plotnine.*')
 filterwarnings('ignore', category=DeprecationWarning, module='plotnine.*')
 
+__all__ = [
+    "rf_rfe",
+    "dev_rfe",
+    "plot_metric",
+    "plot_with_lowess_vline",
+]
 
-def n_features_iter(nf, keep_rate):
+def _n_features_iter(nf: int, keep_rate: float) -> int:
     """
     Determines the features to keep.
 
     Args:
-    nf: current number of features
-    keep_rate: percentage of features to keep
+        nf (int): Current number of features
+        keep_rate (float): Percentage of features to keep
 
-    Yields:
-    int: number of features to keep
+    Returns:
+        int: Number of features to keep
     """
     while nf != 1:
         nf = max(1, int(nf * keep_rate))
@@ -85,23 +76,26 @@ def rf_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     Runs random forest feature elimination step over iterator process.
 
     Args:
-    estimator: Random forest classifier object
-    X: a data frame of training data
-    Y: a vector of sample labels from training data set
-    features: a vector of feature names
-    fold: current fold
-    out_dir: output directory. default '.'
-    elimination_rate: percent rate to reduce feature list. default .2
+        estimator: Random forest classifier object
+        X (DataFrame): Training data
+        Y (array-like): Sample labels from training data set
+        features (array-like): Feature names
+        fold (int): Current fold
+        out_dir (str): Output directory. Default '.'
+        elimination_rate (float): Percent rate to reduce feature list. Default 0.2
+        RANK (bool): Whether to perform feature ranking. Default True
 
-    Yields:
-    dict: a dictionary with number of features, normalized mutual
-          information score, accuracy score, auc roc curve and array of the
-          indexes for features to keep
+    Returns:
+        tuple: Dictionary with elimination results, and first elimination step results
     """
-    d = dict()
+    if not 0 < elimination_rate < 1:
+        raise ValueError("elimination_rate must be between 0 and 1")
+
+    d = {}
     pfirst = None
-    keep_rate = 1-elimination_rate
-    for p in _rf_fe(estimator, X, Y, n_features_iter(X.shape[1], keep_rate),
+    keep_rate = 1 - elimination_rate
+
+    for p in _rf_fe(estimator, X, Y, _n_features_iter(X.shape[1], keep_rate),
                     features, fold, out_dir, RANK):
         if pfirst is None:
             pfirst = p
@@ -117,176 +111,123 @@ def dev_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     process assuming developmental set is needed.
 
     Args:
-    estimator: classifier or regression linear model object
-    X: a data frame of training data
-    Y: a vector of sample labels from training data set
-    features: a vector of feature names
-    fold: current fold
-    out_dir: output directory. default '.'
-    elimination_rate: percent rate to reduce feature list. default .2
-    dev_size: developmental set size. default '0.20'
-    RANK: run feature ranking, default 'True'
-    SEED: random state. default 'True'
+        estimator: Classifier or regression linear model object
+        X (DataFrame): Training data
+        Y (array-like): Sample labels from training data set
+        features (array-like): Feature names
+        fold (int): Current fold
+        out_dir (str): Output directory. Default '.'
+        elimination_rate (float): Percent rate to reduce feature list. Default 0.2
+        dev_size (float): Developmental set size. Default 0.2
+        RANK (bool): Run feature ranking. Default True
+        SEED (bool): Use fixed random state. Default False
 
-    Yields:
-    dict: a dictionary with number of features, r2 score, mean square error,
-          expalined variance, and array of the indices for features to keep
+    Returns:
+        tuple: Dictionary with elimination results, and first elimination step results
     """
-    d = dict()
+    if not 0 < elimination_rate < 1 or not 0 < dev_size < 1:
+        raise ValueError("elimination_rate and dev_size must be between 0 and 1")
+
+    d = {}
     pfirst = None
-    keep_rate = 1-elimination_rate
-    for p in _regr_fe(estimator, X, Y, n_features_iter(X.shape[1], keep_rate),
+    keep_rate = 1 - elimination_rate
+
+    for p in _regr_fe(estimator, X, Y, _n_features_iter(X.shape[1], keep_rate),
                       features, fold, out_dir, dev_size, SEED, RANK):
         if pfirst is None:
             pfirst = p
         d[p[0]] = p
+
     return d, pfirst
 
 
-def save_plot(p, fn, width=7, height=7):
-    '''Save plot as svg, png, and pdf with specific label and dimension.'''
+def _save_plot(p, fn, width=7, height=7):
+    '''
+    Save plot as svg, png, and pdf with specific label and dimension.
+
+    Args:
+        p: Plot object
+        fn (str): File name (without extension)
+        width (int): Plot width. Default 7
+        height (int): Plot height. Default 7
+    '''
     for ext in ['.svg', '.png', '.pdf']:
-        p.save(fn+ext, width=width, height=height)
+        p.save(fn + ext, width=width, height=height)
 
 
-def plot_nmi(d, fold, output_dir):
+def plot_metric(d, fold, output_dir, metric_name, y_label):
     """
     Plot feature elimination results for normalized mutual information.
 
     Args:
-    d: feature elimination class dictionary
-    fold: current fold
-    out_dir: output directory. default '.'
+        d (dict): Feature elimination class dictionary
+        fold (int): Current fold
+        output_dir (str): Output directory
+        metric_name (str): Name of the metric (used for file naming)
+        y_label (str): Label for y-axis
 
-    Yields:
-    graph: plot of feature by NMI, automatically saves files as pdf, png, and
-           svg
+    Returns:
+        None: Saves plot files and prints the plot
     """
-    df_elim = pd.DataFrame([{'n features':k,
-                             'normalized mutual information':d[k][1]} for k in d.keys()])
-    gg = ggplot(df_elim, aes(x='n features', y='normalized mutual information'))\
-        + geom_point() + scale_x_log10() + theme_light()
-    save_plot(gg, output_dir+"/nmi_fold_%d" % (fold))
-    print(gg)
+    if metric_name in ["nmi", "r2"]:
+        key_num = 1
+    elif metric_name in ["roc", "mse"]:
+        key_num = 2
+    elif metric_name in ["acc", "evar"]:
+        key_num = 3
+    else:
+        raise ValueError(f"Unknown metric_name: {metric_name}")
+    df_elim = pd.DataFrame([{'n features': k,
+                             y_label: d[k][key_num]} for k in d.keys()])
 
+    gg = (ggplot(df_elim, aes(x='n features', y=y_label))
+          + geom_point()
+          + scale_x_log10()
+          + theme_light()
+          + labs(x="Number of features", y=y_label))
 
-def plot_roc(d, fold, output_dir):
-    """
-    Plot feature elimination results for AUC ROC curve.
-
-    Args:
-    d: feature elimination class dictionary
-    fold: current fold
-    out_dir: output directory. default '.'
-
-    Yields:
-    graph: plot of feature by AUC, automatically saves files as pdf, png, and
-           svg
-    """
-    df_elim = pd.DataFrame([{'n features':k,
-                             'ROC AUC':d[k][3]} for k in d.keys()])
-    gg = ggplot(df_elim, aes(x='n features', y='ROC AUC'))\
-        + geom_point() + scale_x_log10() + theme_light()
-    save_plot(gg, output_dir+"/roc_fold_%d" % (fold))
-    print(gg)
-
-
-def plot_acc(d, fold, output_dir):
-    """
-    Plot feature elimination results for accuracy.
-
-    Args:
-    d: feature elimination class dictionary
-    fold: current fold
-    out_dir: output directory. default '.'
-
-    Yields:
-    graph: plot of feature by accuracy, automatically saves files as pdf, png,
-           and svg
-    """
-    df_elim = pd.DataFrame([{'n features':k,
-                             'Accuracy':d[k][2]} for k in d.keys()])
-    gg = ggplot(df_elim, aes(x='n features', y='Accuracy'))\
-        + geom_point() + scale_x_log10() + theme_light()
-    save_plot(gg, output_dir+"/acc_fold_%d" % (fold))
-    print(gg)
-
-
-def plot_r2(d, fold, output_dir):
-    """
-    Plot feature elimination results for R2.
-
-    Args:
-    d: feature elimination class dictionary
-    fold: current fold
-    out_dir: output directory. default '.'
-
-    Yields:
-    graph: plot of feature by R2, automatically saves files as pdf, png, and svg
-    """
-    df_elim = pd.DataFrame([{'n features':k,
-                             'R2':d[k][1]} for k in d.keys()])
-    gg = ggplot(df_elim, aes(x='n features', y='R2'))\
-        + geom_point() + scale_x_log10() + theme_light()
-    save_plot(gg, output_dir+"/r2_fold_%d" % (fold))
-    print(gg)
-
-
-def plot_mse(d, fold, output_dir):
-    """
-    Plot feature elimination results for mean square error curve.
-
-    Args:
-    d: feature elimination class dictionary
-    fold: current fold
-    out_dir: output directory. default '.'
-
-    Yields:
-    graph: plot of feature by mean square error, automatically saves files as
-           pdf, png, and svg
-    """
-    df_elim = pd.DataFrame([{'n features':k,
-                             'Mean Square Error':d[k][2]} for k in d.keys()])
-    gg = ggplot(df_elim, aes(x='n features', y='Mean Square Error'))\
-        + geom_point() + scale_x_log10() + theme_light()
-    save_plot(gg, output_dir+"/mse_fold_%d" % (fold))
-    print(gg)
-
-
-def plot_evar(d, fold, output_dir):
-    """
-    Plot feature elimination results for explained variance.
-
-    Args:
-    d: feature elimination class dictionary
-    fold: current fold
-    out_dir: output directory. default '.'
-
-    Yields:
-    graph: plot of feature by explained variance, automatically saves files as
-           png, pdf, and svg
-    """
-    df_elim = pd.DataFrame([{'n features':k,
-                             'Explained Variance':d[k][3]} for k in d.keys()])
-    gg = ggplot(df_elim, aes(x='n features', y='Explained Variance'))\
-        + geom_point() + scale_x_log10() + theme_light()
-    save_plot(gg, output_dir+"/evar_fold_%d" % (fold))
+    outfile = f"{output_dir}/{metric_name}_fold_{fold}"
+    _save_plot(gg, outfile)
     print(gg)
 
 
 def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
                            classify=True, multi=False, acc=False):
-    label = 'ROC AUC' if classify and multi else 'Accuracy' if classify and acc else 'NMI' if classify else 'R2'
+    """
+    Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
+
+    Args:
+        d (dict): Feature elimination class dictionary
+        fold (int): Current fold
+        output_dir (str): Output directory
+        frac (float): Fraction for LOWESS smoothing. Default 3/10
+        step_size (float): Step size for peripheral feature extraction. Default 0.05
+        classify (bool): Whether it's a classification task. Default True
+        multi (bool): Whether it's a multi-class classification. Default False
+        acc (bool): Whether to use accuracy for optimization. Default False
+
+    Returns:
+        None: Saves plot files and prints the plot
+    """
+    if classify:
+        label = 'ROC AUC' if multi else 'Accuracy' if acc else 'NMI'
+    else:
+        label = 'R2'
+
     _, max_feat_log10 = extract_max_lowess(d, frac, multi, acc)
-    x,y,z,_,_ = _cal_lowess(d, frac, multi, acc)
+    x, y, z, _, _ = _cal_lowess(d, frac, multi, acc)
     df_elim = pd.DataFrame({'X': x, 'Y': y})
-    _,lo = extract_max_lowess(d, frac, multi, acc)
-    _,l1 = extract_peripheral_lowess(d, frac, step_size, multi, acc)
-    gg = ggplot(df_elim, aes(x='X', y='Y')) + geom_point(color='blue') + \
-        geom_vline(xintercept=lo, color='blue', linetype='dashed') + \
-        geom_vline(xintercept=l1, color='orange', linetype='dashed') +\
-        scale_x_log10() + labs(x='log10(N Features)', y=label) +\
-        theme_light()
+    _, lo = extract_max_lowess(d, frac, multi, acc)
+    _, l1 = extract_peripheral_lowess(d, frac, step_size, multi, acc)
+
+    gg = (ggplot(df_elim, aes(x='X', y='Y'))
+          + geom_point(color='blue')
+          + geom_vline(xintercept=lo, color='blue', linetype='dashed')
+          + geom_vline(xintercept=l1, color='orange', linetype='dashed')
+          + scale_x_log10()
+          + labs(x='log10(N Features)', y=label)
+          + theme_light())
+
     print(gg)
-    save_plot(gg, "%s/%s_log10_dRFE_fold_%d" %
-              (output_dir,label.replace(" ", "_"),fold))
+    outfile = f"{output_dir}/{label.replace(' ', '_')}_log10_dRFE_fold_{fold}"
+    _save_plot(gg, outfile)

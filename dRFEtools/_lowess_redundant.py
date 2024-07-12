@@ -197,7 +197,10 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     Notes:
        Will generate a plot with LOWESS smoothing
     """
-    label = 'ROC AUC' if classify and multi else 'Accuracy' if classify and acc else 'NMI' if classify else 'R2'
+    if classify:
+        label = 'ROC AUC' if multi else 'Accuracy' if acc else 'NMI'
+    else:
+        label = 'R2'
     title = f'Fraction: {frac:.2f}, Step Size: {step_size:.2f}'
 
     x, y, z, _, _ = _cal_lowess(d, frac, multi, acc)
