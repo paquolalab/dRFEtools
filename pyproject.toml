@@ -13,7 +13,7 @@ authors = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>", "Apuã Paquola <apua.p
 maintainers = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>"]
 license = "GPL-3.0-only"
 readme = "README.md"
-homepage = "https://github.com/LieberInstitute/dRFEtools.git"
+homepage = "https://drfetools.readthedocs.io/en/latest/index.html"
 repository = "https://github.com/LieberInstitute/dRFEtools.git"
 keywords = ['recursive feature elimination', 'sklearn', 'feature ranking']
 
