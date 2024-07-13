@@ -1,5 +1,7 @@
-Example of optimizing lowess fit and max and redundant set selection
-====================================================================
+Optimization Examples
+=====================
+
+**Example of optimizing lowess fit and max and redundant set selection**
 
 .. code:: python
 

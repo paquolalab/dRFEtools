@@ -11,7 +11,7 @@ scikit-learn.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    install
    optimization

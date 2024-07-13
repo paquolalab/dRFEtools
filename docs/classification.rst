@@ -1,5 +1,7 @@
-General application of dRFEtools, version 0.3.0+
-================================================
+Classification Example
+======================
+
+**General application of dRFEtools, version 0.3.0+**
 
 .. code:: python
 
