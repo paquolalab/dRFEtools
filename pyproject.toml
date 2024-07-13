@@ -18,18 +18,14 @@ repository = "https://github.com/LieberInstitute/dRFEtools.git"
 keywords = ['recursive feature elimination', 'sklearn', 'feature ranking']
 
 [tool.poetry.dependencies]
-python = "^3.9"
-numpy = "^1.20"
+python = "^3.10"
+numpy = "^2.0"
 pandas = "^2.0"
 matplotlib = "^3.7"
-plotnine = "^0.12"
+plotnine = "^0.13"
 scikit-learn = "^1.2"
-scipy = "^1.7"
+scipy = "^1.14"
 statsmodels = "^0.14"
-
-[tool.poetry.dev-dependencies]
-pandas-plink = "^2.2"
-gtfparse = "^1.2"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.3.7"
