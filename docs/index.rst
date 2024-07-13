@@ -14,7 +14,8 @@ scikit-learn.
    :caption: Contents:
 
    install
-   tutorials
+   optimization
+   classification
    api
 
 Indices and tables
