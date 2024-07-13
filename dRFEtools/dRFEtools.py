@@ -32,7 +32,7 @@ import numpy as np
 import pandas as pd
 from plotnine import *
 from warnings import filterwarnings
-from matplotlib.cbook import mplDeprecation
+from matplotlib import MatplotlibDeprecationWarning
 
 from ._dev_scoring import _regr_fe
 from ._random_forest import _rf_fe
@@ -43,7 +43,7 @@ from ._lowess_redundant import (
     extract_peripheral_lowess
 )
 
-filterwarnings("ignore", category=mplDeprecation)
+filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 filterwarnings('ignore', category=UserWarning, module='plotnine.*')
 filterwarnings('ignore', category=DeprecationWarning, module='plotnine.*')
 
