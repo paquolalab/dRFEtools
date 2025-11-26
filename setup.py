@@ -18,30 +18,33 @@ Installation
 
 """
 
-setup(name='dRFEtools',
-      version='0.1.0',
-      packages=find_packages(),
-      install_requires=[
-          'numpy>=1.20.1',
-          'pandas>=1.2.4',
-          'matplotlib>=3.3.4',
-          'plotnine>=0.7.1',
-          'scikit-learn>=0.24.1',
-          'scipy>=1.6.0',
-          'statsmodels>=0.12.2',
-      ],
-      author="Kynon JM Benjamin",
-      author_email="kj.benjamin90@gmail.com",
-      decription="A package for preforming dynamic recursive feature elimination with sklearn",
-      long_description=LONG_DESCRIPTION,
-      long_description_content_type='text/x-rst',
-      package_data={
-          '': ['*md'],
-      },
-      url="https://github.com/paquolalab/dRFEtools.git",
-      classifiers=[
-          "Programming Language :: Python :: 3",
-          "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-      ],
-      keywords='random-forest recursive-feature-elimination sklearn linear-models feature-ranking',
-      zip_safe=False)
+setup(
+    name="dRFEtools",
+    version="0.3.5",
+    packages=find_packages(),
+    install_requires=[
+        "numpy>=2.0.0",
+        "pandas>=2.0.0",
+        "matplotlib>=3.7.0",
+        "plotnine>=0.13.0",
+        "scikit-learn>=1.2.0",
+        "scipy>=1.14.0",
+        "statsmodels>=0.14.0",
+    ],
+    author="Kynon JM Benjamin",
+    author_email="kj.benjamin90@gmail.com",
+    description="A package for preforming dynamic recursive feature elimination with sklearn",
+    long_description=LONG_DESCRIPTION,
+    long_description_content_type="text/x-rst",
+    package_data={
+        "": ["*md"],
+    },
+    url="https://github.com/LieberInstitute/dRFEtools.git",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    ],
+    keywords="random-forest recursive-feature-elimination sklearn linear-models feature-ranking",
+    python_requires=">=3.10",
+    zip_safe=False,
+)
