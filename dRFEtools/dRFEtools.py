@@ -28,9 +28,26 @@ Feature ranking modified from Tarun Katipalli (TK) ranking function.
 """
 __author__ = 'Apuã Paquola'
 
-from ._dev_scoring import _regr_fe
-from ._random_forest import _rf_fe
-from .plotting import plot_metric, plot_with_lowess_vline
+import numpy as np
+import pandas as pd
+from plotnine import (
+    aes,
+    ggplot,
+    geom_point,
+    geom_vline,
+    labs,
+    scale_x_log10,
+    theme_light,
+)
+from warnings import filterwarnings
+from matplotlib import MatplotlibDeprecationWarning
+
+from .lowess import _cal_lowess, extract_max_lowess, extract_peripheral_lowess, optimize_lowess_plot
+from .scoring import _regr_fe, _rf_fe
+
+filterwarnings("ignore", category=MatplotlibDeprecationWarning)
+filterwarnings('ignore', category=UserWarning, module='plotnine.*')
+filterwarnings('ignore', category=DeprecationWarning, module='plotnine.*')
 
 __all__ = [
     "rf_rfe",
