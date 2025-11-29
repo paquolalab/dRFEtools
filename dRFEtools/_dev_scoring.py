@@ -117,7 +117,7 @@ def dev_score_roc(estimator, X, Y):
     """
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.predict_proba(X)
-        kwargs = {'multi_class': 'ovr', "average": "weighted"}
+        kwargs = {'multi_class': 'ovr'}
     else:
         labels_pred = _dev_predictions(estimator, X)
         kwargs = {"average": "weighted"}
@@ -230,7 +230,7 @@ def _regr_fe_step(estimator, X, Y, n_features_to_keep, features,
     Raises:
         ValueError: If n_features_to_keep is greater than the number of features in X
     """
-    if n_features_to_keep > X1.shape[1]:
+    if n_features_to_keep > X.shape[1]:
         raise ValueError("n_features_to_keep cannot be greater than the number of features in X")
 
     kwargs = {'random_state': 13,
