@@ -11,8 +11,6 @@ from matplotlib import MatplotlibDeprecationWarning
 from plotnine import aes, geom_point, geom_vline, ggplot, labs, scale_x_log10, theme_light
 
 from .lowess.redundant import (
-    DEFAULT_FRAC,
-    DEFAULT_STEP_SIZE,
     _cal_lowess,
     extract_max_lowess,
     extract_peripheral_lowess,
