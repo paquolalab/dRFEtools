@@ -1,21 +1,28 @@
-from ._dev_scoring import (
-    dev_score_r2, dev_score_nmi,
-    dev_score_roc, dev_score_mse,
-    dev_score_evar, dev_score_accuracy
-)
-from ._random_forest import (
-    oob_score_r2, oob_score_nmi,
-    oob_score_roc, oob_score_mse,
-    oob_score_evar, oob_score_accuracy
-)
-from ._lowess_redundant import (
-    extract_max_lowess,
-    optimize_lowess_plot,
-    extract_peripheral_lowess
-)
+"""Public API for the :mod:`dRFEtools` package."""
 
 from .dRFEtools import (
-    rf_rfe, dev_rfe,
+    dev_rfe,
+    plot_metric,
+    plot_with_lowess_vline,
+    rf_rfe,
+)
+from .lowess import extract_max_lowess, extract_peripheral_lowess, optimize_lowess_plot
+from .metrics import features_rank_fnc
+from .scoring.dev import (
+    dev_score_accuracy,
+    dev_score_evar,
+    dev_score_mse,
+    dev_score_nmi,
+    dev_score_r2,
+    dev_score_roc,
+)
+from .scoring.random_forest import (
+    oob_score_accuracy,
+    oob_score_evar,
+    oob_score_mse,
+    oob_score_nmi,
+    oob_score_r2,
+    oob_score_roc,
 )
 from .plotting import plot_metric, plot_with_lowess_vline
 
@@ -31,10 +38,16 @@ __all__ = [
     "optimize_lowess_plot",
     "plot_with_lowess_vline",
     "extract_peripheral_lowess",
-    "oob_score_r2", "dev_score_r2",
-    "oob_score_roc", "dev_score_roc",
-    "oob_score_nmi", "dev_score_nmi",
-    "oob_score_mse", "dev_score_mse",
-    "oob_score_evar", "dev_score_evar",
-    "oob_score_accuracy", "dev_score_accuracy",
+    "oob_score_r2",
+    "dev_score_r2",
+    "oob_score_roc",
+    "dev_score_roc",
+    "oob_score_nmi",
+    "dev_score_nmi",
+    "oob_score_mse",
+    "dev_score_mse",
+    "oob_score_evar",
+    "dev_score_evar",
+    "oob_score_accuracy",
+    "dev_score_accuracy",
 ]

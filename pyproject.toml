@@ -12,6 +12,9 @@ readme = "README.md"
 keywords = ["feature selection", "recursive feature elimination", "sklearn"]
 packages = [{ include = "dRFEtools" }]
 
+[tool.poetry.scripts]
+drfetools = "dRFEtools.cli:main"
+
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 numpy = ">=2.0"
