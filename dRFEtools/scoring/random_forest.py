@@ -1,4 +1,5 @@
-"""Random-forest specific scoring and feature elimination helpers.
+"""
+Random-forest specific scoring and feature elimination helpers.
 
 The routines here wrap out-of-bag (OOB) metrics and recursive feature
 elimination for both classification and regression random forest models.
@@ -40,9 +41,9 @@ def _oob_predictions(estimator: RandomForestClassifier | RandomForestRegressor) 
     """Return OOB predictions for supported random forest estimators."""
 
     if isinstance(estimator, RandomForestClassifier):
-        return estimator.classes_[
-            (estimator.oob_decision_function_[:, 1] > 0.5).astype(int)
-        ]
+        if estimator.oob_decision_function_.ndim == 1:
+            return estimator.oob_decision_function_.round().astype(int)
+        return np.argmax(estimator.oob_decision_function_, axis=1)
     if isinstance(estimator, RandomForestRegressor):
         return estimator.oob_prediction_
     raise ValueError(
@@ -55,7 +56,7 @@ def oob_score_roc(estimator: RandomForestClassifier, Y: ArrayLike) -> float:
 
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.oob_decision_function_
-        kwargs: Dict[str, str] = {"multi_class": "ovr", "average": "weighted"}
+        kwargs: Dict[str, str] = {"multi_class": "ovr"}
     else:
         labels_pred = _oob_predictions(estimator)
         kwargs = {"average": "weighted"}

@@ -1,4 +1,5 @@
-"""Utility helpers for :mod:`dRFEtools`.
+"""
+Utility helpers for :mod:`dRFEtools`.
 
 The helpers centralize common behaviors such as result normalization,
 feature importance extraction, and plot saving to improve maintainability
@@ -17,7 +18,8 @@ from numpy.typing import ArrayLike
 StandardizedRFEResult = Dict[str, Any]
 
 def normalize_rfe_result(result: Any) -> StandardizedRFEResult:
-    """Coerce RFE outputs into the standardized dictionary format.
+    """
+    Coerce RFE outputs into the standardized dictionary format.
 
     Parameters
     ----------
@@ -70,7 +72,8 @@ def normalize_rfe_result(result: Any) -> StandardizedRFEResult:
 
 
 def get_feature_importances(estimator: Any) -> np.ndarray:
-    """Return absolute feature importance values from an estimator.
+    """
+    Return absolute feature importance values from an estimator.
 
     Parameters
     ----------
@@ -102,7 +105,8 @@ def get_feature_importances(estimator: Any) -> np.ndarray:
 
 
 def save_plot_variants(plot_obj: Any, output_path: Path, *, width: int = 7, height: int = 7) -> None:
-    """Persist a plot to standard image formats.
+    """
+    Persist a plot to standard image formats.
 
     Both plotnine objects and Matplotlib figures are supported.
     """
@@ -117,7 +121,8 @@ def save_plot_variants(plot_obj: Any, output_path: Path, *, width: int = 7, heig
 
 
 def ensure_path(path_like: str | Path) -> Path:
-    """Normalize user-provided file system paths.
+    """
+    Normalize user-provided file system paths.
 
     Parameters
     ----------

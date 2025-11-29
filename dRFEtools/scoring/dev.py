@@ -58,7 +58,7 @@ def dev_score_roc(estimator, X: ArrayLike, Y: ArrayLike) -> float:
 
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.predict_proba(X)
-        kwargs: Dict[str, str] = {"multi_class": "ovr", "average": "weighted"}
+        kwargs: Dict[str, str] = {"multi_class": "ovr"}
     else:
         labels_pred = estimator.predict(X)
         kwargs = {"average": "weighted"}

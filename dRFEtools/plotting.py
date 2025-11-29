@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Dict
+from pathlib import Path
 from warnings import filterwarnings
 
 import pandas as pd
