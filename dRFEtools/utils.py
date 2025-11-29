@@ -1,14 +1,14 @@
-"""Utility helpers for :mod:`dRFEtools`."""
+"""
+Utility helpers for :mod:`dRFEtools`.
+"""
 
 from __future__ import annotations
-
 from typing import Any, Dict
 from warnings import warn
 
 import numpy as np
 
 StandardizedRFEResult = Dict[str, Any]
-
 
 def normalize_rfe_result(result: Any) -> StandardizedRFEResult:
     """Coerce RFE outputs into the standardized dictionary format.

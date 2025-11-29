@@ -1,4 +1,6 @@
-"""Command-line interface for :mod:`dRFEtools`."""
+"""
+Command-line interface for :mod:`dRFEtools`.
+"""
 
 from __future__ import annotations
 
