@@ -4,17 +4,17 @@ Plotting utilities for dRFEtools.
 import pandas as pd
 from plotnine import (
     aes,
+    labs,
     ggplot,
     geom_point,
     geom_vline,
-    labs,
     scale_x_log10,
     theme_light,
 )
 from warnings import filterwarnings
 from matplotlib import MatplotlibDeprecationWarning
 
-from ._lowess_redundant import (
+from .lowess.redundant import (
     _cal_lowess,
     extract_max_lowess,
     optimize_lowess_plot,
