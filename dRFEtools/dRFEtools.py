@@ -26,28 +26,20 @@ Original author Apuã Paquola (AP).
 Edits and package management by Kynon Jade Benjamin (KJB)
 Feature ranking modified from Tarun Katipalli (TK) ranking function.
 """
-__author__ = 'Apuã Paquola'
+__author__ = "Apuã Paquola"
 
-import numpy as np
-import pandas as pd
-from plotnine import (
-    aes,
-    ggplot,
-    geom_point,
-    geom_vline,
-    labs,
-    scale_x_log10,
-    theme_light,
-)
 from warnings import filterwarnings
-from matplotlib import MatplotlibDeprecationWarning
 
-from .lowess import _cal_lowess, extract_max_lowess, extract_peripheral_lowess, optimize_lowess_plot
+from matplotlib import MatplotlibDeprecationWarning
+from sklearn.base import is_classifier
+from sklearn.ensemble import RandomForestClassifier
+
 from .scoring import _regr_fe, _rf_fe
+from .utils import normalize_rfe_result
 
 filterwarnings("ignore", category=MatplotlibDeprecationWarning)
-filterwarnings('ignore', category=UserWarning, module='plotnine.*')
-filterwarnings('ignore', category=DeprecationWarning, module='plotnine.*')
+filterwarnings("ignore", category=UserWarning, module="plotnine.*")
+filterwarnings("ignore", category=DeprecationWarning, module="plotnine.*")
 
 __all__ = [
     "rf_rfe",
@@ -55,6 +47,7 @@ __all__ = [
     "plot_metric",
     "plot_with_lowess_vline",
 ]
+
 
 def _n_features_iter(nf: int, keep_rate: float) -> int:
     """
@@ -72,8 +65,9 @@ def _n_features_iter(nf: int, keep_rate: float) -> int:
         yield nf
 
 
-def rf_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
-           RANK=True):
+def rf_rfe(
+    estimator, X, Y, features, fold, out_dir=".", elimination_rate=0.2, RANK=True
+):
     """
     Runs random forest feature elimination step over iterator process.
 
@@ -97,17 +91,53 @@ def rf_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     pfirst = None
     keep_rate = 1 - elimination_rate
 
-    for p in _rf_fe(estimator, X, Y, _n_features_iter(X.shape[1], keep_rate),
-                    features, fold, out_dir, RANK):
+    for p in _rf_fe(
+        estimator,
+        X,
+        Y,
+        _n_features_iter(X.shape[1], keep_rate),
+        features,
+        fold,
+        out_dir,
+        RANK,
+    ):
+        normalized = normalize_rfe_result(p)
+        metrics = normalized.get("metrics", {})
+
+        if not isinstance(p, dict):
+            if isinstance(estimator, RandomForestClassifier):
+                metrics = {
+                    key: metrics[key]
+                    for key in ("nmi_score", "accuracy_score", "roc_auc_score")
+                    if key in metrics
+                }
+            else:
+                metrics = {
+                    key: metrics[key]
+                    for key in ("r2_score", "mse_score", "explain_var")
+                    if key in metrics
+                }
+        normalized["metrics"] = metrics
+
         if pfirst is None:
-            pfirst = p
-        d[p[0]] = p
+            pfirst = normalized
+        d[normalized["n_features"]] = normalized
 
     return d, pfirst
 
 
-def dev_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
-            dev_size=0.2, RANK=True, SEED=False):
+def dev_rfe(
+    estimator,
+    X,
+    Y,
+    features,
+    fold,
+    out_dir=".",
+    elimination_rate=0.2,
+    dev_size=0.2,
+    RANK=True,
+    SEED=False,
+):
     """
     Runs recursive feature elimination for linear model step over iterator
     process assuming developmental set is needed.
@@ -134,10 +164,38 @@ def dev_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2,
     pfirst = None
     keep_rate = 1 - elimination_rate
 
-    for p in _regr_fe(estimator, X, Y, _n_features_iter(X.shape[1], keep_rate),
-                      features, fold, out_dir, dev_size, SEED, RANK):
+    for p in _regr_fe(
+        estimator,
+        X,
+        Y,
+        _n_features_iter(X.shape[1], keep_rate),
+        features,
+        fold,
+        out_dir,
+        dev_size,
+        SEED,
+        RANK,
+    ):
+        normalized = normalize_rfe_result(p)
+        metrics = normalized.get("metrics", {})
+
+        if not isinstance(p, dict):
+            if is_classifier(estimator):
+                metrics = {
+                    key: metrics[key]
+                    for key in ("nmi_score", "accuracy_score", "roc_auc_score")
+                    if key in metrics
+                }
+            else:
+                metrics = {
+                    key: metrics[key]
+                    for key in ("r2_score", "mse_score", "explain_var")
+                    if key in metrics
+                }
+        normalized["metrics"] = metrics
+
         if pfirst is None:
-            pfirst = p
-        d[p[0]] = p
+            pfirst = normalized
+        d[normalized["n_features"]] = normalized
 
     return d, pfirst

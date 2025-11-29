@@ -15,20 +15,20 @@ Additional modifications by Kynon Jade Benjamin to replace class definitions of
 functions.
 """
 
-__author__ = 'Kynon Jade Benjamin'
+__author__ = "Kynon Jade Benjamin"
+
+from itertools import chain
 
 import numpy as np
-from itertools import chain
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import (
+    accuracy_score,
+    explained_variance_score,
+    mean_squared_error,
+    normalized_mutual_info_score,
     r2_score,
     roc_auc_score,
-    accuracy_score,
-    mean_squared_error,
-    explained_variance_score,
-    normalized_mutual_info_score
 )
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 from ..metrics.ranking import features_rank_fnc
 
@@ -41,6 +41,7 @@ __all__ = [
     "oob_score_evar",
     "oob_score_accuracy",
 ]
+
 
 def _oob_predictions(estimator):
     """
@@ -58,12 +59,15 @@ def _oob_predictions(estimator):
                    RandomForestRegressor
     """
     if isinstance(estimator, RandomForestClassifier):
-        return estimator.classes_[(estimator.oob_decision_function_[:, 1]
-                                   > 0.5).astype(int)]
+        return estimator.classes_[
+            (estimator.oob_decision_function_[:, 1] > 0.5).astype(int)
+        ]
     elif isinstance(estimator, RandomForestRegressor):
         return estimator.oob_prediction_
     else:
-        raise ValueError("Estimator must be either RandomForestClassifier or RandomForestRegressor")
+        raise ValueError(
+            "Estimator must be either RandomForestClassifier or RandomForestRegressor"
+        )
 
 
 def oob_score_roc(estimator, Y):
@@ -80,7 +84,7 @@ def oob_score_roc(estimator, Y):
     """
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.oob_decision_function_
-        kwargs = {'multi_class': 'ovr', "average": "weighted"}
+        kwargs = {"multi_class": "ovr", "average": "weighted"}
     else:
         labels_pred = _oob_predictions(estimator)
         kwargs = {"average": "weighted"}
@@ -100,8 +104,7 @@ def oob_score_nmi(estimator, Y):
         float: normalized mutual information score
     """
     labels_pred = _oob_predictions(estimator)
-    return normalized_mutual_info_score(Y, labels_pred,
-                                        average_method='arithmetic')
+    return normalized_mutual_info_score(Y, labels_pred, average_method="arithmetic")
 
 
 def oob_score_accuracy(estimator, Y):
@@ -161,12 +164,10 @@ def oob_score_evar(estimator, Y):
         float: explained variance score
     """
     labels_pred = _oob_predictions(estimator)
-    return explained_variance_score(Y, labels_pred,
-                                    multioutput='uniform_average')
+    return explained_variance_score(Y, labels_pred, multioutput="uniform_average")
 
 
-def _rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
-               RANK):
+def _rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir, RANK):
     """
     Eliminates features step-by-step.
 
@@ -187,32 +188,40 @@ def _rf_fe_step(estimator, X, Y, n_features_to_keep, features, fold, out_dir,
         ValueError: If n_features_to_keep is greater than the number of features in X
     """
     if n_features_to_keep > X.shape[1]:
-        raise ValueError("n_features_to_keep cannot be greater than the number of features in X")
+        raise ValueError(
+            "n_features_to_keep cannot be greater than the number of features in X"
+        )
 
     estimator.fit(X, Y)
     feature_importances = estimator.feature_importances_
-    rank = np.argsort(feature_importances)[::-1] # reverse sort
+    rank = np.argsort(feature_importances)[::-1]  # reverse sort
     selected = rank[:n_features_to_keep]
 
     features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK)
-    result = {
-        'n_features': X.shape[1],
-        'selected': selected
-    }
+    metrics = {}
 
     if isinstance(estimator, RandomForestClassifier):
-        result.update({
-            'nmi_score': oob_score_nmi(estimator, Y),
-            'accuracy_score': oob_score_accuracy(estimator, Y),
-            'roc_auc_score': oob_score_roc(estimator, Y)
-        })
+        metrics.update(
+            {
+                "nmi_score": oob_score_nmi(estimator, Y),
+                "accuracy_score": oob_score_accuracy(estimator, Y),
+                "roc_auc_score": oob_score_roc(estimator, Y),
+            }
+        )
     else:
-        result.update({
-            'r2_score': oob_score_r2(estimator, Y),
-            'mse_score': oob_score_mse(estimator, Y),
-            'explain_var': oob_score_evar(estimator, Y)
-        })
-    return result
+        metrics.update(
+            {
+                "r2_score": oob_score_r2(estimator, Y),
+                "mse_score": oob_score_mse(estimator, Y),
+                "explain_var": oob_score_evar(estimator, Y),
+            }
+        )
+
+    return {
+        "n_features": X.shape[1],
+        "selected": selected,
+        "metrics": metrics,
+    }
 
 
 def _rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
@@ -230,7 +239,7 @@ def _rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
         RANK (bool): Whether to return ranks
 
     Returns:
-        tuple: Feature elimination results for each iteration
+        dict: Feature elimination results for each iteration
 
     Raises:
         ValueError: If X and features have different number of columns
@@ -243,10 +252,16 @@ def _rf_fe(estimator, X, Y, n_features_iter, features, fold, out_dir, RANK):
     for nf in chain(n_features_iter, [1]):
         p = _rf_fe_step(estimator, X, Y, nf, features, fold, out_dir, RANK)
 
-        if isinstance(estimator, RandomForestClassifier):
-            yield p['n_features'], p['nmi_score'], p['accuracy_score'], p['roc_auc_score'], indices
-        else:
-            yield p['n_features'], p['r2_score'], p['mse_score'], p['explain_var'], indices
-        indices = indices[p['selected']]
-        features = features[p['selected']]
-        X = X[:, p['selected']] if isinstance(X, np.ndarray) else X.iloc[:, p['selected']]
+        yield {
+            "n_features": p["n_features"],
+            "metrics": p["metrics"],
+            "indices": indices.copy(),
+            "selected": p["selected"],
+        }
+        indices = indices[p["selected"]]
+        features = features[p["selected"]]
+        X = (
+            X[:, p["selected"]]
+            if isinstance(X, np.ndarray)
+            else X.iloc[:, p["selected"]]
+        )

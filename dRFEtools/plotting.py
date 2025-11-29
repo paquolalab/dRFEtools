@@ -1,13 +1,14 @@
 """
 Plotting utilities for dRFEtools.
 """
+
 import pandas as pd
 from plotnine import (
     aes,
-    labs,
-    ggplot,
     geom_point,
     geom_vline,
+    ggplot,
+    labs,
     scale_x_log10,
     theme_light,
 )
@@ -17,15 +18,34 @@ from matplotlib import MatplotlibDeprecationWarning
 from .lowess.redundant import (
     _cal_lowess,
     extract_max_lowess,
-    optimize_lowess_plot,
     extract_peripheral_lowess,
 )
+from .utils import normalize_rfe_result
 
 filterwarnings("ignore", category=MatplotlibDeprecationWarning)
-filterwarnings('ignore', category=UserWarning, module='plotnine.*')
-filterwarnings('ignore', category=DeprecationWarning, module='plotnine.*')
+filterwarnings("ignore", category=UserWarning, module="plotnine.*")
+filterwarnings("ignore", category=DeprecationWarning, module="plotnine.*")
 
 __all__ = ["plot_metric", "plot_with_lowess_vline"]
+
+
+METRIC_KEYS = {
+    "nmi": ("nmi_score", "r2_score"),
+    "roc": ("roc_auc_score",),
+    "acc": ("accuracy_score",),
+    "r2": ("r2_score",),
+    "mse": ("mse_score",),
+    "evar": ("explain_var",),
+}
+
+
+def _metric_value(entry, metric_name):
+    normalized = normalize_rfe_result(entry)
+    metrics = normalized.get("metrics", {})
+    for key in METRIC_KEYS[metric_name]:
+        if key in metrics:
+            return metrics[key]
+    return None
 
 
 def _save_plot(p, fn, width=7, height=7):
@@ -38,7 +58,7 @@ def _save_plot(p, fn, width=7, height=7):
         width (int): Plot width. Default 7
         height (int): Plot height. Default 7
     """
-    for ext in ['.svg', '.png', '.pdf']:
+    for ext in [".svg", ".png", ".pdf"]:
         p.save(fn + ext, width=width, height=height)
 
 
@@ -56,30 +76,38 @@ def plot_metric(d, fold, output_dir, metric_name, y_label):
     Returns:
         None: Saves plot files and prints the plot
     """
-    if metric_name in ["nmi", "r2"]:
-        key_num = 1
-    elif metric_name in ["roc", "mse"]:
-        key_num = 2
-    elif metric_name in ["acc", "evar"]:
-        key_num = 3
-    else:
+    if metric_name not in METRIC_KEYS:
         raise ValueError(f"Unknown metric_name: {metric_name}")
-    df_elim = pd.DataFrame([{'n features': k,
-                             y_label: d[k][key_num]} for k in d.keys()])
+    df_elim = pd.DataFrame(
+        [
+            {"n features": k, y_label: _metric_value(v, metric_name)}
+            for k, v in d.items()
+        ]
+    )
 
-    gg = (ggplot(df_elim, aes(x='n features', y=y_label))
-          + geom_point()
-          + scale_x_log10()
-          + theme_light()
-          + labs(x="Number of features", y=y_label))
+    gg = (
+        ggplot(df_elim, aes(x="n features", y=y_label))
+        + geom_point()
+        + scale_x_log10()
+        + theme_light()
+        + labs(x="Number of features", y=y_label)
+    )
 
     outfile = f"{output_dir}/{metric_name}_fold_{fold}"
     _save_plot(gg, outfile)
     print(gg)
 
 
-def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
-                           classify=True, multi=False, acc=False):
+def plot_with_lowess_vline(
+    d,
+    fold,
+    output_dir,
+    frac=3 / 10,
+    step_size=0.05,
+    classify=True,
+    multi=False,
+    acc=False,
+):
     """
     Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
 
@@ -97,23 +125,25 @@ def plot_with_lowess_vline(d, fold, output_dir, frac=3/10, step_size=0.05,
         None: Saves plot files and prints the plot
     """
     if classify:
-        label = 'ROC AUC' if multi else 'Accuracy' if acc else 'NMI'
+        label = "ROC AUC" if multi else "Accuracy" if acc else "NMI"
     else:
-        label = 'R2'
+        label = "R2"
 
     _, max_feat_log10 = extract_max_lowess(d, frac, multi, acc)
     x, y, z, _, _ = _cal_lowess(d, frac, multi, acc)
-    df_elim = pd.DataFrame({'X': x, 'Y': y})
+    df_elim = pd.DataFrame({"X": x, "Y": y})
     _, lo = extract_max_lowess(d, frac, multi, acc)
     _, l1 = extract_peripheral_lowess(d, frac, step_size, multi, acc)
 
-    gg = (ggplot(df_elim, aes(x='X', y='Y'))
-          + geom_point(color='blue')
-          + geom_vline(xintercept=lo, color='blue', linetype='dashed')
-          + geom_vline(xintercept=l1, color='orange', linetype='dashed')
-          + scale_x_log10()
-          + labs(x='log10(N Features)', y=label)
-          + theme_light())
+    gg = (
+        ggplot(df_elim, aes(x="X", y="Y"))
+        + geom_point(color="blue")
+        + geom_vline(xintercept=lo, color="blue", linetype="dashed")
+        + geom_vline(xintercept=l1, color="orange", linetype="dashed")
+        + scale_x_log10()
+        + labs(x="log10(N Features)", y=label)
+        + theme_light()
+    )
 
     print(gg)
     outfile = f"{output_dir}/{label.replace(' ', '_')}_log10_dRFE_fold_{fold}"
