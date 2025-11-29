@@ -16,8 +16,8 @@ from ._lowess_redundant import (
 
 from .dRFEtools import (
     rf_rfe, dev_rfe,
-    plot_metric, plot_with_lowess_vline
 )
+from .plotting import plot_metric, plot_with_lowess_vline
 
 __version__ = "0.3.5"
 
