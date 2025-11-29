@@ -14,7 +14,7 @@ from plotnine import (
 from warnings import filterwarnings
 from matplotlib import MatplotlibDeprecationWarning
 
-from ._lowess_redundant import (
+from .lowess.redundant import (
     _cal_lowess,
     extract_max_lowess,
     optimize_lowess_plot,
