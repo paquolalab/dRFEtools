@@ -5,7 +5,7 @@ sklearn.
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
-Package developed in Python 3.8+.
+Package developed in Python 3.10+.
 
 In addition to scikit-learn, `dRFEtools` is also built with NumPy, SciPy,
 Pandas, matplotlib, plotnine, and statsmodels. Currently, dynamic RFE supports

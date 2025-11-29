@@ -1,35 +1,43 @@
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
+
 [tool.poetry]
 name = "dRFEtools"
 packages = [
     {include = "dRFEtools"}
 ]
-version = "0.3.4"
+version = "0.3.5"
 description = "A package for preforming dynamic recursive feature elimination with sklearn."
 authors = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>", "Apuã Paquola <apua.paquola@libd.org>"]
 maintainers = ["Kynon JM Benjamin <kj.benjamin90@gmail.com>"]
 license = "GPL-3.0-only"
 readme = "README.md"
-homepage = "https://github.com/LieberInstitute/dRFEtools.git"
+homepage = "https://drfetools.readthedocs.io/en/latest/index.html"
 repository = "https://github.com/LieberInstitute/dRFEtools.git"
 keywords = ['recursive feature elimination', 'sklearn', 'feature ranking']
 
 [tool.poetry.dependencies]
-python = "^3.8"
-numpy = "^1.20.0"
-pandas = "^2.0.2"
-matplotlib = "^3.7.0"
-plotnine = "^0.12.1"
+python = "^3.10"
+numpy = "^2.0"
+pandas = "^2.0"
+matplotlib = "^3.7"
+plotnine = "^0.13"
 scikit-learn = "^1.2"
-scipy = "^1.7"
-statsmodels = "^0.14.0"
+scipy = "^1.14"
+statsmodels = "^0.14"
 
-[tool.poetry.dev-dependencies]
-pandas-plink = "^2.2.9"
-gtfparse = "^1.2.1"
+[tool.poetry.group.docs.dependencies]
+sphinx = "^7.3.7"
+sphinx-rtd-theme = "^2.0.0"
+sphinx-autodoc-typehints = "^2.1.0"
+torch = {version = "^2.3.1+cpu", source = "pytorch_cpu"}
+torchvision = {version = "^0.18.1+cpu", source = "pytorch_cpu"}
+
+[[tool.poetry.source]]
+name = "pytorch_cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
 
 [tool.poetry-dynamic-versioning]
 enable = false
-
-[build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
-build-backend = "poetry_dynamic_versioning.backend"
