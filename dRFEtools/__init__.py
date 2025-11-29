@@ -1,13 +1,12 @@
 """Public API for the :mod:`dRFEtools` package."""
 
-from .dRFEtools import (
-    dev_rfe,
-    plot_metric,
-    plot_with_lowess_vline,
-    rf_rfe,
-)
-from .lowess import extract_max_lowess, extract_peripheral_lowess, optimize_lowess_plot
+from .dRFEtools import dev_rfe, rf_rfe
 from .metrics import features_rank_fnc
+from .lowess import (
+    extract_max_lowess,
+    extract_peripheral_lowess,
+    optimize_lowess_plot,
+)
 from .scoring.dev import (
     dev_score_accuracy,
     dev_score_evar,
