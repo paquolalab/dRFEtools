@@ -29,15 +29,16 @@ statsmodels = ">=0.14"
 homepage = "https://drfetools.readthedocs.io"
 repository = "https://github.com/LieberInstitute/dRFEtools"
 "Bug Tracker" = "https://github.com/paquolalab/dRFEtools/issues"
+
 [build-system]
 requires = ["poetry-core>=1.8.0"]
 build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
 docs = [
-    "sphinx>=7.3",
+    "sphinx>=7",
     "sphinx-rtd-theme>=2.0",
-    "sphinx-autodoc-typehints>=2.1"
+    "sphinx-autodoc-typehints>=2"
 ]
 
 [tool.poetry-dynamic-versioning]
