@@ -16,13 +16,6 @@ from ..utils import normalize_rfe_result, save_plot_variants
 
 __author__ = "Kynon J Benjamin"
 
-__all__ = [
-    "_cal_lowess",
-    "extract_max_lowess",
-    "optimize_lowess_plot",
-    "extract_peripheral_lowess",
-]
-
 DEFAULT_FRAC = 0.3
 DEFAULT_STEP_SIZE = 0.02
 LOWESS_POINTS = 5001

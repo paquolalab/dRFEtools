@@ -1,5 +1,5 @@
-import numpy as np
 import pytest
+import numpy as np
 from sklearn.linear_model import LinearRegression
 
 from dRFEtools.utils import get_feature_importances, normalize_rfe_result
