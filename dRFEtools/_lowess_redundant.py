@@ -49,7 +49,7 @@ def _array_to_tuple(np_array):
         tuple: Converted tuple.
     """
     try:
-        return tuple(array_to_tuple(_) for _ in np_array)
+        return tuple(_array_to_tuple(_) for _ in np_array)
     except TypeError:
         return np_array
 
@@ -92,7 +92,7 @@ def _cal_lowess(d, frac, multi, acc):
     tck = interpolate.splrep(x, y, s=0)
     xnew = np.linspace(x.min(), x.max(), num=5001, endpoint=True)
     ynew = interpolate.splev(xnew, tck, der=0)
-    z = _run_lowess(_array_to_tuple(xnew), array_to_tuple(ynew), frac)
+    z = _run_lowess(_array_to_tuple(xnew), _array_to_tuple(ynew), frac)
     return x, y, z, xnew, ynew
 
 
@@ -204,9 +204,9 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
     title = f'Fraction: {frac:.2f}, Step Size: {step_size:.2f}'
 
     x, y, z, _, _ = _cal_lowess(d, frac, multi, acc)
-    df_elim = pd.DataFrame({'X': np.exp(x) - 0.5, 'Y': y})
+    df_elim = pd.DataFrame({'X': 10**x - 0.5, 'Y': y})
     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
-    lowess_df["X0"] = np.exp(lowess_df["X0"]) - 0.5
+    lowess_df["X0"] = 10**lowess_df["X0"] - 0.5
     lo, _ = extract_max_lowess(d, frac, multi, acc)
     l1, _ = extract_peripheral_lowess(d, frac, step_size, multi, acc)
 

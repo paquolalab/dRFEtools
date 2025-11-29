@@ -58,8 +58,9 @@ def _oob_predictions(estimator):
                    RandomForestRegressor
     """
     if isinstance(estimator, RandomForestClassifier):
-        return estimator.classes_[(estimator.oob_decision_function_[:, 1]
-                                   > 0.5).astype(int)]
+        if estimator.oob_decision_function_.ndim == 1:
+            return estimator.oob_decision_function_.round().astype(int)
+        return np.argmax(estimator.oob_decision_function_, axis=1)
     elif isinstance(estimator, RandomForestRegressor):
         return estimator.oob_prediction_
     else:
@@ -80,7 +81,7 @@ def oob_score_roc(estimator, Y):
     """
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.oob_decision_function_
-        kwargs = {'multi_class': 'ovr', "average": "weighted"}
+        kwargs = {'multi_class': 'ovr'}
     else:
         labels_pred = _oob_predictions(estimator)
         kwargs = {"average": "weighted"}
