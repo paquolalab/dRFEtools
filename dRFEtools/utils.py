@@ -16,7 +16,6 @@ from numpy.typing import ArrayLike
 
 StandardizedRFEResult = Dict[str, Any]
 
-
 def normalize_rfe_result(result: Any) -> StandardizedRFEResult:
     """Coerce RFE outputs into the standardized dictionary format.
 
