@@ -28,6 +28,20 @@ Feature ranking modified from Tarun Katipalli (TK) ranking function.
 """
 __author__ = 'Apuã Paquola'
 
+import numpy as np
+import pandas as pd
+from plotnine import (
+    aes,
+    ggplot,
+    geom_point,
+    geom_vline,
+    labs,
+    scale_x_log10,
+    theme_light,
+)
+from warnings import filterwarnings
+from matplotlib import MatplotlibDeprecationWarning
+
 from ._dev_scoring import _regr_fe
 from ._random_forest import _rf_fe
 from .plotting import plot_metric, plot_with_lowess_vline
