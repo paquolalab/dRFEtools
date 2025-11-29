@@ -30,7 +30,15 @@ __author__ = 'Apuã Paquola'
 
 import numpy as np
 import pandas as pd
-from plotnine import *
+from plotnine import (
+    aes,
+    ggplot,
+    geom_point,
+    geom_vline,
+    labs,
+    scale_x_log10,
+    theme_light,
+)
 from warnings import filterwarnings
 from matplotlib import MatplotlibDeprecationWarning
 
