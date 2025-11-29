@@ -358,6 +358,9 @@ at the link below.
 
 ### Plotting functions
 
+The plotting utilities are defined in `dRFEtools.plotting` and are also
+re-exported from the top-level `dRFEtools` package for backward compatibility.
+
 1.  Save plots
 
     `save_plots`
