@@ -36,8 +36,8 @@ build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
 docs = [
-    "sphinx>=7",
-    "sphinx-rtd-theme>=2.0",
+    "sphinx>=8",
+    "sphinx-rtd-theme>=2",
     "sphinx-autodoc-typehints>=2"
 ]
 
