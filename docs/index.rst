@@ -37,13 +37,15 @@ Currently, dynamic RFE supports models with ``coef_`` or ``feature_importances_`
 Features
 --------
 
-This package provides several functions to run dynamic recursive feature elimination (dRFE) for random forest and linear model classifier and regression models.
+This package provides several functions to run dynamic recursive feature
+elimination (dRFE) for random forest and linear model classifier and regression
+models.
 
 **Random Forest Models:**
-    Assumes Out-of-Bag (OOB) is set to True.
+    Assume Out-of-Bag (OOB) scoring is enabled.
 
 **Linear Models:**
-    Generates a developmental set.
+    Build an internal developmental split.
 
 Measurements for Feature Selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -63,12 +65,28 @@ Measurements for Feature Selection
 Package Structure
 -----------------
 
-The package is divided into four additional scripts:
+The codebase is organized into focused modules:
 
-1. Out-of-bag dynamic RFE metrics (AP/KJB)
-2. Validation (developmental) set dynamic RFE metrics (KJB)
-3. Rank features function (TK)
-4. Lowess core + peripheral selection (KJB)
+* ``dRFEtools.py`` – core interfaces for random-forest and developmental-set
+  elimination workflows.
+* ``scoring/`` – metric implementations for developmental splits and
+  random-forest OOB scoring.
+* ``lowess/`` – helpers for smoothing elimination curves and extracting optimal
+  feature counts.
+* ``metrics/`` – feature ranking utilities used during elimination.
+* ``plotting.py`` – visualization helpers re-exported from the top-level
+  package.
+* ``cli.py`` – command-line entry points for running full dRFE pipelines.
+* ``utils.py`` – shared helpers for normalizing results and persisting plots.
+
+API Overview
+------------
+
+``rf_rfe`` and ``dev_rfe`` return standardized dictionaries for each iteration
+that include the number of retained features, a task-specific ``metrics``
+mapping, and the indices of surviving features. The same format is consumed by
+the plotting, LOWESS, and scoring helpers documented in the reference manual
+below.
 
 .. toctree::
    :maxdepth: 2
