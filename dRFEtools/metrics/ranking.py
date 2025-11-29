@@ -4,13 +4,14 @@ Originally developed by Tarun Katipalli.
 Edits and package management by Kynon Jade Benjamin
 """
 
-__author__ = 'Tarun Katipalli'
+__author__ = "Tarun Katipalli"
 
 import numpy as np
 import pandas as pd
 from os.path import join, exists
 
 __all__ = ["features_rank_fnc"]
+
 
 def features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK):
     """
@@ -48,23 +49,18 @@ def features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK):
     eliminated = rank[n_features_to_keep:]
 
     if len(eliminated) == 0:
-        rank_df = pd.DataFrame({
-            'Geneid': features[rank],
-            'Fold': fold,
-            'Rank': 1
-        })
+        rank_df = pd.DataFrame({"Geneid": features[rank], "Fold": fold, "Rank": 1})
     else:
-        rank_df = pd.DataFrame({
-            'Geneid': features[eliminated],
-            'Fold': fold,
-            'Rank': np.arange(n_features_to_keep + 1,
-                              n_features_to_keep + 1 + len(eliminated))
-        })
+        rank_df = pd.DataFrame(
+            {
+                "Geneid": features[eliminated],
+                "Fold": fold,
+                "Rank": np.arange(
+                    n_features_to_keep + 1, n_features_to_keep + 1 + len(eliminated)
+                ),
+            }
+        )
     output_file = join(out_dir, "rank_features.txt")
-    rank_df.sort_values('Rank', ascending=False).to_csv(
-        output_file,
-        sep='\t',
-        mode='a',
-        index=False,
-        header=not exists(output_file)
+    rank_df.sort_values("Rank", ascending=False).to_csv(
+        output_file, sep="\t", mode="a", index=False, header=not exists(output_file)
     )

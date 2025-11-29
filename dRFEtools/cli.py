@@ -25,7 +25,9 @@ REGRESSION_METRICS = {
 MINIMIZE = {"mse"}
 
 
-def _load_dataset(data_path: Path, target: str) -> Tuple[pd.DataFrame, pd.Series, Iterable[str]]:
+def _load_dataset(
+    data_path: Path, target: str
+) -> Tuple[pd.DataFrame, pd.Series, Iterable[str]]:
     df = pd.read_csv(data_path)
     if target not in df.columns:
         raise ValueError(f"Target column '{target}' not found in {data_path}")
@@ -46,15 +48,21 @@ def _resolve_metric(task: str, metric: str | None) -> str:
         return default
     if metric not in allowed:
         valid = ", ".join(sorted(allowed))
-        raise ValueError(f"Metric '{metric}' is not valid for task '{task}'. Choose from: {valid}")
+        raise ValueError(
+            f"Metric '{metric}' is not valid for task '{task}'. Choose from: {valid}"
+        )
     return metric
 
 
 def _metric_index(task: str, metric: str) -> int:
-    return (CLASSIFICATION_METRICS if task == "classification" else REGRESSION_METRICS)[metric]
+    return (CLASSIFICATION_METRICS if task == "classification" else REGRESSION_METRICS)[
+        metric
+    ]
 
 
-def _summarize_results(results: Dict[int, Tuple], task: str, metric: str) -> Tuple[int, float]:
+def _summarize_results(
+    results: Dict[int, Tuple], task: str, metric: str
+) -> Tuple[int, float]:
     idx = _metric_index(task, metric)
     comparator = min if metric in MINIMIZE else max
     best = comparator(results.values(), key=lambda record: record[idx])
@@ -109,7 +117,9 @@ def run_rf_rfe(args: argparse.Namespace) -> None:
 
     print(f"First elimination step retained {first_step[0]} features.")
     direction = "lowest" if metric in MINIMIZE else "highest"
-    print(f"Best {direction} {metric} achieved with {best_n} features: {best_score:.4f}")
+    print(
+        f"Best {direction} {metric} achieved with {best_n} features: {best_score:.4f}"
+    )
 
     if args.save_summary:
         summary_path = Path(args.save_summary)
@@ -144,7 +154,9 @@ def run_dev_rfe(args: argparse.Namespace) -> None:
 
     print(f"First elimination step retained {first_step[0]} features.")
     direction = "lowest" if metric in MINIMIZE else "highest"
-    print(f"Best {direction} {metric} achieved with {best_n} features: {best_score:.4f}")
+    print(
+        f"Best {direction} {metric} achieved with {best_n} features: {best_score:.4f}"
+    )
 
     if args.save_summary:
         summary_path = Path(args.save_summary)
@@ -154,20 +166,35 @@ def run_dev_rfe(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run dynamic recursive feature elimination workflows.")
-    parser.add_argument("--version", action="version", version=f"dRFEtools {__version__}")
+    parser = argparse.ArgumentParser(
+        description="Run dynamic recursive feature elimination workflows."
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"dRFEtools {__version__}"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     common = {
         "data": dict(help="Path to a CSV file containing features and target column."),
         "target": dict(help="Name of the target column to predict."),
-        "task": dict(choices=["classification", "regression"], default="classification"),
+        "task": dict(
+            choices=["classification", "regression"], default="classification"
+        ),
         "output_dir": dict(default=".", help="Directory to write ranking artifacts."),
-        "elimination_rate": dict(type=float, default=0.2, help="Fraction of features removed per iteration."),
+        "elimination_rate": dict(
+            type=float, default=0.2, help="Fraction of features removed per iteration."
+        ),
         "metric": dict(default=None, help="Metric used to pick the best iteration."),
-        "fold": dict(type=int, default=1, help="Fold identifier used in saved outputs."),
-        "rank": dict(action="store_true", help="Persist feature ranking files during elimination."),
-        "save_summary": dict(default=None, help="Optional path to write a CSV of iteration metrics."),
+        "fold": dict(
+            type=int, default=1, help="Fold identifier used in saved outputs."
+        ),
+        "rank": dict(
+            action="store_true",
+            help="Persist feature ranking files during elimination.",
+        ),
+        "save_summary": dict(
+            default=None, help="Optional path to write a CSV of iteration metrics."
+        ),
     }
 
     rf_parser = subparsers.add_parser("rf-rfe", help="Run random-forest-based dRFE.")
@@ -181,11 +208,22 @@ def build_parser() -> argparse.ArgumentParser:
     rf_parser.add_argument("--fold", **common["fold"])
     rf_parser.add_argument("--rank", **common["rank"])
     rf_parser.add_argument("--save-summary", **common["save_summary"])
-    rf_parser.add_argument("--n-estimators", type=int, default=200, help="Number of trees in the random forest.")
-    rf_parser.add_argument("--n-jobs", type=int, default=-1, help="Number of jobs used by the estimator.")
-    rf_parser.add_argument("--random-state", type=int, default=13, help="Random state for reproducibility.")
+    rf_parser.add_argument(
+        "--n-estimators",
+        type=int,
+        default=200,
+        help="Number of trees in the random forest.",
+    )
+    rf_parser.add_argument(
+        "--n-jobs", type=int, default=-1, help="Number of jobs used by the estimator."
+    )
+    rf_parser.add_argument(
+        "--random-state", type=int, default=13, help="Random state for reproducibility."
+    )
 
-    dev_parser = subparsers.add_parser("dev-rfe", help="Run development-set-based dRFE.")
+    dev_parser = subparsers.add_parser(
+        "dev-rfe", help="Run development-set-based dRFE."
+    )
     dev_parser.set_defaults(func=run_dev_rfe)
     dev_parser.add_argument("--data", required=True, **common["data"])
     dev_parser.add_argument("--target", required=True, **common["target"])
@@ -196,8 +234,15 @@ def build_parser() -> argparse.ArgumentParser:
     dev_parser.add_argument("--fold", **common["fold"])
     dev_parser.add_argument("--rank", **common["rank"])
     dev_parser.add_argument("--save-summary", **common["save_summary"])
-    dev_parser.add_argument("--dev-size", type=float, default=0.2, help="Fraction reserved for the development split.")
-    dev_parser.add_argument("--seed", action="store_true", help="Use a deterministic train/dev split.")
+    dev_parser.add_argument(
+        "--dev-size",
+        type=float,
+        default=0.2,
+        help="Fraction reserved for the development split.",
+    )
+    dev_parser.add_argument(
+        "--seed", action="store_true", help="Use a deterministic train/dev split."
+    )
 
     return parser
 
