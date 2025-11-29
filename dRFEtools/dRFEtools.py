@@ -34,14 +34,8 @@ from plotnine import *
 from warnings import filterwarnings
 from matplotlib import MatplotlibDeprecationWarning
 
-from ._dev_scoring import _regr_fe
-from ._random_forest import _rf_fe
-from ._lowess_redundant import (
-    _cal_lowess,
-    extract_max_lowess,
-    optimize_lowess_plot,
-    extract_peripheral_lowess
-)
+from .lowess import _cal_lowess, extract_max_lowess, extract_peripheral_lowess, optimize_lowess_plot
+from .scoring import _regr_fe, _rf_fe
 
 filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 filterwarnings('ignore', category=UserWarning, module='plotnine.*')
