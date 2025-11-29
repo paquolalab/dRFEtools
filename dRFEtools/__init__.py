@@ -24,6 +24,7 @@ from .scoring.random_forest import (
     oob_score_r2,
     oob_score_roc,
 )
+from .plotting import plot_metric, plot_with_lowess_vline
 
 __version__ = "0.3.5"
 

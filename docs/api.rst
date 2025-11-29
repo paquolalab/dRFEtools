@@ -20,6 +20,9 @@ Main functions
 Plotting functions
 ------------------
 
+Plotting helpers live in :mod:`dRFEtools.plotting` and are re-exported from the
+top-level package for convenience.
+
 .. autosummary::
    :toctree: functions
 
