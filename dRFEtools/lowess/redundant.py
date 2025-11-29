@@ -7,7 +7,7 @@ parameter optimization for lowess.
 Developed by Kynon Jade Benjamin.
 """
 
-__author__ = 'Kynon J Benjamin'
+__author__ = "Kynon J Benjamin"
 
 import numpy as np
 import pandas as pd
@@ -15,12 +15,15 @@ import statsmodels.api as sm
 from scipy import interpolate
 import matplotlib.pyplot as plt
 
+from ..utils import normalize_rfe_result
+
 __all__ = [
     "_cal_lowess",
     "extract_max_lowess",
     "optimize_lowess_plot",
-    "extract_peripheral_lowess"
+    "extract_peripheral_lowess",
 ]
+
 
 def _run_lowess(xnew, ynew, frac):
     """
@@ -66,10 +69,24 @@ def _get_elim_df_ordered(d, multi):
     Returns:
         pandas.DataFrame: DataFrame with elimination information.
     """
-    col = 3 if multi else 1
-    df_elim = pd.DataFrame([{'x': k, 'y': d[k][col],
-                             'acc': d[k][2]} for k in d.keys()]).sort_values('x')
-    df_elim['log10_x'] = np.log10(df_elim['x'] + 0.5)
+    rows = []
+    for k, value in d.items():
+        normalized = normalize_rfe_result(value)
+        metrics = normalized.get("metrics", {})
+        y_val = (
+            metrics.get("roc_auc_score")
+            if multi
+            else metrics.get("nmi_score", metrics.get("r2_score"))
+        )
+        rows.append(
+            {
+                "x": k,
+                "y": y_val,
+                "acc": metrics.get("accuracy_score"),
+            }
+        )
+    df_elim = pd.DataFrame(rows).sort_values("x")
+    df_elim["log10_x"] = np.log10(df_elim["x"] + 0.5)
     return df_elim
 
 
@@ -87,8 +104,8 @@ def _cal_lowess(d, frac, multi, acc):
         tuple: n_features (x), model validation values (y), lowess curve (z), xnew, ynew.
     """
     df_elim = _get_elim_df_ordered(d, multi)
-    x = df_elim['log10_x'].values
-    y = df_elim['acc'].values if acc else df_elim['y'].values
+    x = df_elim["log10_x"].values
+    y = df_elim["acc"].values if acc else df_elim["y"].values
     tck = interpolate.splrep(x, y, s=0)
     xnew = np.linspace(x.min(), x.max(), num=5001, endpoint=True)
     ynew = interpolate.splev(xnew, tck, der=0)
@@ -96,7 +113,7 @@ def _cal_lowess(d, frac, multi, acc):
     return x, y, z, xnew, ynew
 
 
-def _cal_lowess_rate_log10(d, frac=3/10, multi=False, acc=False):
+def _cal_lowess_rate_log10(d, frac=3 / 10, multi=False, acc=False):
     """
     Calculate rate of change on the lowess fitted curve with log10
     transformation.
@@ -112,12 +129,12 @@ def _cal_lowess_rate_log10(d, frac=3/10, multi=False, acc=False):
     """
     _, _, z, _, _ = _cal_lowess(d, frac, multi, acc)
     dfz = pd.DataFrame(z, columns=["Features", "LOWESS"])
-    pts = dfz.drop(0)
-    pts['DxDy'] = np.diff(dfz.Features) / np.diff(dfz.LOWESS)
+    pts = dfz.drop(0).copy()
+    pts["DxDy"] = np.diff(dfz.Features) / np.diff(dfz.LOWESS)
     return pts
 
 
-def extract_max_lowess(d, frac=3/10, multi=False, acc=False):
+def extract_max_lowess(d, frac=3 / 10, multi=False, acc=False):
     """
     Extract max features based on rate of change of log10
     transformed lowess fit curve.
@@ -133,16 +150,20 @@ def extract_max_lowess(d, frac=3/10, multi=False, acc=False):
     """
     _, _, z, xnew, ynew = _cal_lowess(d, frac, multi, acc)
     df_elim = _get_elim_df_ordered(d, multi)
-    df_lowess = pd.DataFrame({'X': xnew, 'Y': ynew,
-                              'xprime': pd.DataFrame(z)[0],
-                              'yprime': pd.DataFrame(z)[1]})
-    val = df_lowess[df_lowess['yprime'] == max(df_lowess.yprime)].X.values
-    closest_val = min(df_elim['log10_x'].values, key=lambda x: abs(x - val))
-    return df_elim[df_elim['log10_x'] == closest_val].x.values[0], closest_val
+    df_lowess = pd.DataFrame(
+        {
+            "X": xnew,
+            "Y": ynew,
+            "xprime": pd.DataFrame(z)[0],
+            "yprime": pd.DataFrame(z)[1],
+        }
+    )
+    val = df_lowess[df_lowess["yprime"] == max(df_lowess.yprime)].X.values
+    closest_val = min(df_elim["log10_x"].values, key=lambda x: abs(x - val))
+    return df_elim[df_elim["log10_x"] == closest_val].x.values[0], closest_val
 
 
-def extract_peripheral_lowess(d, frac=3/10, step_size=0.02, multi=False,
-                              acc=False):
+def extract_peripheral_lowess(d, frac=3 / 10, step_size=0.02, multi=False, acc=False):
     """
     Extract peripheral features based on rate of change of log10
     transformed lowess fit curve.
@@ -159,23 +180,40 @@ def extract_peripheral_lowess(d, frac=3/10, step_size=0.02, multi=False,
     """
     _, _, z, xnew, ynew = _cal_lowess(d, frac, multi, acc)
     df_elim = _get_elim_df_ordered(d, multi)
-    df_lowess = pd.DataFrame({'X': xnew, 'Y': ynew,
-                              'xprime': pd.DataFrame(z)[0],
-                              'yprime': pd.DataFrame(z)[1]})
+    df_lowess = pd.DataFrame(
+        {
+            "X": xnew,
+            "Y": ynew,
+            "xprime": pd.DataFrame(z)[0],
+            "yprime": pd.DataFrame(z)[1],
+        }
+    )
     dxdy = _cal_lowess_rate_log10(d, frac, multi, acc)
     dxdy = dxdy[dxdy.LOWESS >= max(dxdy.LOWESS) - np.std(dxdy.LOWESS)].copy()
-    local_peak = [(dxdy.iloc[yy, 2] - dxdy.iloc[yy-1, 2]) > step_size and dxdy.iloc[yy, 2] < 0 for yy in range(1, dxdy.shape[0])]
+    local_peak = [
+        (dxdy.iloc[yy, 2] - dxdy.iloc[yy - 1, 2]) > step_size and dxdy.iloc[yy, 2] < 0
+        for yy in range(1, dxdy.shape[0])
+    ]
     local_peak.append(False)
     peaks = dxdy[local_peak]
-    val = df_lowess[df_lowess['xprime'] == max(peaks.Features)].X.values
-    redunt_feat_log10 = min(df_elim['log10_x'].values, key=lambda x: abs(x - val))
-    peripheral_feat = df_elim[df_elim['log10_x'] == redunt_feat_log10].x.values[0]
+    val = df_lowess[df_lowess["xprime"] == max(peaks.Features)].X.values
+    redunt_feat_log10 = min(df_elim["log10_x"].values, key=lambda x: abs(x - val))
+    peripheral_feat = df_elim[df_elim["log10_x"] == redunt_feat_log10].x.values[0]
     return peripheral_feat, redunt_feat_log10
 
 
-def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
-                         classify=True, save_plot=False, multi=False, acc=False,
-                         print_out=True):
+def optimize_lowess_plot(
+    d,
+    fold,
+    output_dir,
+    frac=3 / 10,
+    step_size=0.02,
+    classify=True,
+    save_plot=False,
+    multi=False,
+    acc=False,
+    print_out=True,
+):
     """
     Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
 
@@ -198,33 +236,49 @@ def optimize_lowess_plot(d, fold, output_dir, frac=3/10, step_size=0.02,
        Will generate a plot with LOWESS smoothing
     """
     if classify:
-        label = 'ROC AUC' if multi else 'Accuracy' if acc else 'NMI'
+        label = "ROC AUC" if multi else "Accuracy" if acc else "NMI"
     else:
-        label = 'R2'
-    title = f'Fraction: {frac:.2f}, Step Size: {step_size:.2f}'
+        label = "R2"
+    title = f"Fraction: {frac:.2f}, Step Size: {step_size:.2f}"
 
     x, y, z, _, _ = _cal_lowess(d, frac, multi, acc)
-    df_elim = pd.DataFrame({'X': np.exp(x) - 0.5, 'Y': y})
+    df_elim = pd.DataFrame({"X": 10**x - 0.5, "Y": y})
     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
-    lowess_df["X0"] = np.exp(lowess_df["X0"]) - 0.5
+    lowess_df["X0"] = 10 ** lowess_df["X0"] - 0.5
     lo, _ = extract_max_lowess(d, frac, multi, acc)
     l1, _ = extract_peripheral_lowess(d, frac, step_size, multi, acc)
 
     plt.clf()
     plt.figure()
-    plt.plot(df_elim["X"], df_elim["Y"], 'o', label="dRFE")
-    plt.plot(lowess_df["X0"], lowess_df["Y0"], '-', label="Lowess")
-    plt.vlines(lo, ymin=np.min(y), ymax=np.max(y), colors='b',
-               linestyles='--', label='Max Features')
-    plt.vlines(l1, ymin=np.min(y), ymax=np.max(y),
-               colors='orange', linestyles='--',
-               label='Peripheral Features')
-    plt.xscale('log'); plt.xlabel('log(N Features)')
-    plt.ylabel(label); plt.legend(loc='best'); plt.title(title)
+    plt.plot(df_elim["X"], df_elim["Y"], "o", label="dRFE")
+    plt.plot(lowess_df["X0"], lowess_df["Y0"], "-", label="Lowess")
+    plt.vlines(
+        lo,
+        ymin=np.min(y),
+        ymax=np.max(y),
+        colors="b",
+        linestyles="--",
+        label="Max Features",
+    )
+    plt.vlines(
+        l1,
+        ymin=np.min(y),
+        ymax=np.max(y),
+        colors="orange",
+        linestyles="--",
+        label="Peripheral Features",
+    )
+    plt.xscale("log")
+    plt.xlabel("log(N Features)")
+    plt.ylabel(label)
+    plt.legend(loc="best")
+    plt.title(title)
 
     if save_plot:
         for ext in ["png", "pdf", "svg"]:
-            plt.savefig(f"{output_dir}/optimize_lowess_{fold}_frac{frac:.2f}_step_{step_size:.2f}_{label.replace(' ', '_')}.{ext}")
+            plt.savefig(
+                f"{output_dir}/optimize_lowess_{fold}_frac{frac:.2f}_step_{step_size:.2f}_{label.replace(' ', '_')}.{ext}"
+            )
 
     if print_out:
         plt.show()
