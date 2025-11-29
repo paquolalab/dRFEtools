@@ -385,31 +385,31 @@ dev = ["meson-python (>=0.13.1,<0.17.0)", "pybind11 (>=2.13.2,!=2.13.3)", "setup
 
 [[package]]
 name = "mizani"
-version = "0.11.4"
+version = "0.14.3"
 description = "Scales for Python"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "mizani-0.11.4-py3-none-any.whl", hash = "sha256:5b6271dc3da2c88694dca2e0e0a7e1879f0e2fb046c789776f54d090a5243735"},
-    {file = "mizani-0.11.4.tar.gz", hash = "sha256:9fdb79e88602ca29132613b428d6c1e8af436e88e37d55a0f8eb99fe044c9bc2"},
+    {file = "mizani-0.14.3-py3-none-any.whl", hash = "sha256:6d2ca9b1b8366ff85668f0cc1b6095f1e702e26e66f132c4f02a949efa32a688"},
+    {file = "mizani-0.14.3.tar.gz", hash = "sha256:c2fb886b3c9e8109be5b8fd21e1130fba1f0a20230a987146240221209fc0ddd"},
 ]
 
 [package.dependencies]
-numpy = ">=1.23.0"
-pandas = ">=2.1.0"
-scipy = ">=1.7.0"
+numpy = ">=1.23.5"
+pandas = ">=2.2.0"
+scipy = ">=1.8.0"
 tzdata = {version = "*", markers = "platform_system == \"Windows\" or platform_system == \"Emscripten\""}
 
 [package.extras]
 all = ["mizani[build]", "mizani[dev]", "mizani[doc]", "mizani[lint]", "mizani[test]"]
 build = ["build", "wheel"]
 dev = ["mizani[typing]", "notebook", "pre-commit", "twine"]
-doc = ["numpydoc (>=1.6.0)", "sphinx (>=7.2.0)"]
+doc = ["numpydoc (>=1.7.0)", "sphinx (>=7.2.0)"]
 lint = ["ruff"]
 rtd = ["mock"]
-test = ["pytest-cov"]
-typing = ["pandas-stubs", "pyright (==1.1.364)"]
+test = ["pytest-cov (>=4.0.0)"]
+typing = ["pandas-stubs", "pyright (==1.1.402)"]
 
 [[package]]
 name = "numpy"
@@ -735,33 +735,33 @@ xmp = ["defusedxml"]
 
 [[package]]
 name = "plotnine"
-version = "0.13.6"
+version = "0.15.1"
 description = "A Grammar of Graphics for Python"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "plotnine-0.13.6-py3-none-any.whl", hash = "sha256:4acc1af29fa4e91e726b67d49277e8368f62e1c817f01bf14ecd8ca5e83bfaea"},
-    {file = "plotnine-0.13.6.tar.gz", hash = "sha256:3c8c8f958c295345140230ea29803488f83aba9b5a8d0b1b2eb3eaefbf0a06b8"},
+    {file = "plotnine-0.15.1-py3-none-any.whl", hash = "sha256:29fcef889bf55ec2e7c036db1578e085d0ec1be3b0253ff573cc6c08618b111f"},
+    {file = "plotnine-0.15.1.tar.gz", hash = "sha256:d52801561bb403a89fa8716f4b63b1468ee7cedb50991406ae2feb373a745c1f"},
 ]
 
 [package.dependencies]
-matplotlib = ">=3.7.0"
-mizani = ">=0.11.0,<0.12.0"
-numpy = ">=1.23.0"
-pandas = ">=2.1.0,<3.0.0"
-scipy = ">=1.7.0"
-statsmodels = ">=0.14.0"
+matplotlib = ">=3.8.0"
+mizani = ">=0.14.0,<0.15.0"
+numpy = ">=1.23.5"
+pandas = ">=2.2.0"
+scipy = ">=1.8.0"
+statsmodels = ">=0.14.5"
 
 [package.extras]
 all = ["plotnine[build]", "plotnine[dev]", "plotnine[doc]", "plotnine[extra]", "plotnine[lint]", "plotnine[test]"]
 build = ["build", "wheel"]
 dev = ["plotnine[typing]", "pre-commit", "twine"]
-doc = ["click", "importlib-resources", "jupyter", "nbsphinx", "numpydoc (>=0.9.1)", "quartodoc (>=0.7.2)"]
-extra = ["adjustText", "geopandas", "scikit-learn", "scikit-misc (>=0.3.0)"]
+doc = ["click", "jupyter", "numpydoc (>=0.9.1)", "quartodoc (>=0.7.2)"]
+extra = ["adjustText (>=1.2.0)", "geodatasets (>=2024.8.0)", "geopandas (>=1.0.0)", "polars (>=1.24.0)", "pyarrow (>=19.0.1)", "scikit-learn (>=1.3.0)", "scikit-misc (>=0.5.1)"]
 lint = ["ruff"]
-test = ["pytest-cov"]
-typing = ["ipython", "pandas-stubs", "pyright (==1.1.362)"]
+test = ["pytest-cov (>=4.0.0)"]
+typing = ["ipython", "pandas-stubs", "pyright (==1.1.404)"]
 
 [[package]]
 name = "pyparsing"
