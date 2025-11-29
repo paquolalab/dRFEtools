@@ -36,39 +36,34 @@ def normalize_rfe_result(result: Any) -> StandardizedRFEResult:
     if isinstance(result, dict):
         return result
 
-    warn(
-        "Tuple-based RFE outputs are deprecated; use the dictionary format instead.",
-        DeprecationWarning,
-        stacklevel=2,
+    if isinstance(result, tuple):
+        warn(
+            "Tuple-based RFE outputs are deprecated; use the dictionary format instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        if len(result) != 4:
+            raise TypeError("Tuple RFE results must have 4 elements.")
+
+        n_features, metric1, metric2, indices = result
+
+        return {
+            "n_features": n_features,
+            "metrics": {
+                "nmi_score": metric1,
+                "r2_score": metric1,
+                "accuracy_score": metric2,
+                "mse_score": metric2,
+                "roc_auc_score": metric1,
+                "explain_var": metric2,
+            },
+            "indices": list(indices),
+        }
+
+    raise TypeError(
+        f"normalize_rfe_result expected dict or 4-tuple, but got {type(result).__name__}"
     )
-
-    if not isinstance(result, (list, tuple)):
-        raise TypeError("RFE results must be a mapping or tuple-like sequence")
-
-    n_features = result[0]
-    payload = list(result[1:])
-
-    indices = payload[3] if len(payload) >= 4 else None
-    if isinstance(indices, np.ndarray):
-        indices = indices.copy()
-
-    metrics: Dict[str, float] = {}
-    if len(payload) >= 1:
-        metrics["nmi_score"] = payload[0]
-        metrics["r2_score"] = payload[0]
-    if len(payload) >= 2:
-        metrics["accuracy_score"] = payload[1]
-        metrics["mse_score"] = payload[1]
-    if len(payload) >= 3:
-        metrics["roc_auc_score"] = payload[2]
-        metrics["explain_var"] = payload[2]
-
-    return {
-        "n_features": n_features,
-        "metrics": metrics,
-        "indices": indices,
-        "selected": None,
-    }
 
 
 def get_feature_importances(estimator: Any) -> np.ndarray:
