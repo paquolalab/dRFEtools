@@ -1,7 +1,16 @@
-"""Plotting utilities for dRFEtools."""
-
+"""
+Plotting utilities for dRFEtools.
+"""
 import pandas as pd
-from plotnine import *
+from plotnine import (
+    aes,
+    ggplot,
+    geom_point,
+    geom_vline,
+    labs,
+    scale_x_log10,
+    theme_light,
+)
 from warnings import filterwarnings
 from matplotlib import MatplotlibDeprecationWarning
 
