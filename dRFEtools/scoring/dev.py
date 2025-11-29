@@ -1,16 +1,19 @@
-"""
-This script contains the feature elimination step using a
-validation set (developmental) to train the dynamic feature
-elimination.
+"""Development-set feature elimination utilities.
 
-Developed by Kynon Jade Benjamin.
+The functions in this module orchestrate recursive feature elimination
+using a hold-out development split. They are intentionally lightweight to
+maintain backward compatibility while offering clearer typing and
+NumPy-style docstrings.
 """
 
-__author__ = "Kynon J Benjamin"
+from __future__ import annotations
 
 from itertools import chain
+from typing import Dict, Iterable
 
 import numpy as np
+from numpy.typing import ArrayLike
+from sklearn.base import is_classifier
 from sklearn.metrics import (
     accuracy_score,
     explained_variance_score,
@@ -19,10 +22,12 @@ from sklearn.metrics import (
     r2_score,
     roc_auc_score,
 )
-from sklearn.base import is_classifier
 from sklearn.model_selection import train_test_split
 
 from ..metrics.ranking import features_rank_fnc
+from ..utils import get_feature_importances
+
+__author__ = "Kynon J Benjamin"
 
 __all__ = [
     "_regr_fe",
@@ -35,285 +40,190 @@ __all__ = [
 ]
 
 
-def _dev_cal_feature_imp(estimator):
+def dev_score_roc(estimator, X: ArrayLike, Y: ArrayLike) -> float:
+    """Area under the ROC curve for development predictions.
+
+    Parameters
+    ----------
+    estimator
+        Fitted classifier.
+    X, Y
+        Development-set features and labels.
+
+    Returns
+    -------
+    float
+        Weighted ROC-AUC score.
     """
-    Adds feature importance to a scikit-learn estimator.
 
-    Args:
-        estimator: A scikit-learn estimator
-
-    Returns:
-        estimator: The estimator with added feature_importances_ attribute
-
-    Raises:
-        AttributeError: If the estimator is not supported
-
-    Notes:
-        This function also checks dimensions to handle multi-class inputs.
-    """
-    if hasattr(estimator, "feature_log_prob_"):
-        estimator.feature_importances_ = np.exp(
-            np.amax(estimator.feature_log_prob_, axis=0)
-        ).flatten()
-    elif hasattr(estimator, "feature_importances_"):
-        pass
-    elif hasattr(estimator, "coef_"):
-        estimator.feature_importances_ = (
-            np.abs(estimator.coef_).flatten()
-            if estimator.coef_.ndim == 1
-            else np.amax(np.abs(estimator.coef_), axis=0).flatten()
-        )
-    elif hasattr(estimator, "dual_coef_"):
-        estimator.feature_importances_ = np.amax(
-            np.abs(estimator.dual_coef_), axis=0
-        ).flatten()
-    else:
-        raise AttributeError("model not supported")
-    return estimator
-
-
-def _get_feature_importances(estimator):
-    """
-    Retrieve and aggregate (ndim > 1) feature importance
-    from scikit-learn estimator.
-
-    This function also checks dimensions to handle multi-class inputs.
-
-    Args:
-        estimator : A scikit-learn estimator
-
-    Returns:
-        importances (np.ndarray) : The features importances
-
-    Raises:
-        ValueError: If the estimator doesn't have coef_ or feature_importances_ attribute
-    """
-    if hasattr(estimator, "coef_"):
-        importances = estimator.coef_
-        return (
-            np.linalg.norm(importances, axis=0, ord=1).flatten()
-            if importances.ndim > 1
-            else np.abs(importances).flatten()
-        )
-    elif hasattr(estimator, "feature_importances_"):
-        return estimator.feature_importances_
-    else:
-        raise ValueError(
-            f"The estimator {estimator.__class__.__name__} should have `coef_` or `feature_importances_` attribute."
-        )
-
-
-def dev_score_roc(estimator, X, Y):
-    """
-    Calculates the area under the ROC curve score
-    for the DEV predictions.
-
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-
-    Returns:
-        float: AUC ROC score
-    """
     if len(np.unique(Y)) > 2:
         labels_pred = estimator.predict_proba(X)
-        kwargs = {"multi_class": "ovr", "average": "weighted"}
+        kwargs: Dict[str, str] = {"multi_class": "ovr", "average": "weighted"}
     else:
         labels_pred = estimator.predict(X)
         kwargs = {"average": "weighted"}
     return roc_auc_score(Y, labels_pred, **kwargs)
 
 
-def dev_score_nmi(estimator, X, Y):
-    """
-    Calculates the normalized mutual information score
-    from the DEV predictions.
+def dev_score_nmi(estimator, X: ArrayLike, Y: ArrayLike) -> float:
+    """Normalized mutual information for development predictions."""
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-
-    Returns:
-        float: normalized mutual information score
-    """
     labels_pred = estimator.predict(X)
     return normalized_mutual_info_score(Y, labels_pred, average_method="arithmetic")
 
 
-def dev_score_accuracy(estimator, X, Y):
-    """
-    Calculates the accuracy score from the DEV predictions.
+def dev_score_accuracy(estimator, X: ArrayLike, Y: ArrayLike) -> float:
+    """Accuracy for development predictions."""
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-
-    Returns:
-        float: accuracy score
-    """
     labels_pred = estimator.predict(X)
     return accuracy_score(Y, labels_pred)
 
 
-def dev_score_r2(estimator, X, Y):
-    """
-    Calculates the R2 score from the DEV predictions.
+def dev_score_r2(estimator, X: ArrayLike, Y: ArrayLike) -> float:
+    """Coefficient of determination for development predictions."""
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-
-    Returns:
-        float: R2 score
-    """
     labels_pred = estimator.predict(X)
     return r2_score(Y, labels_pred)
 
 
-def dev_score_mse(estimator, X, Y):
-    """
-    Calculates the mean square error from the DEV predictions.
+def dev_score_mse(estimator, X: ArrayLike, Y: ArrayLike) -> float:
+    """Mean squared error for development predictions."""
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-
-    Returns:
-        float: mean square error
-    """
     labels_pred = estimator.predict(X)
     return mean_squared_error(Y, labels_pred)
 
 
-def dev_score_evar(estimator, X, Y):
-    """
-    Calculates the explained variance score from the DEV predictions.
+def dev_score_evar(estimator, X: ArrayLike, Y: ArrayLike) -> float:
+    """Explained variance for development predictions."""
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-
-    Returns:
-        float: explained variance score
-    """
     labels_pred = estimator.predict(X)
     return explained_variance_score(Y, labels_pred, multioutput="uniform_average")
 
 
 def _regr_fe_step(
-    estimator, X, Y, n_features_to_keep, features, fold, out_dir, dev_size, SEED, RANK
-):
+    estimator,
+    X: ArrayLike,
+    Y: ArrayLike,
+    n_features_to_keep: int,
+    features: ArrayLike,
+    fold: int,
+    out_dir: str,
+    dev_size: float,
+    random_state: int | None,
+    rank_features: bool,
+) -> Dict[str, ArrayLike | Dict[str, float]]:
+    """Perform a single feature-elimination step using a dev split.
+
+    Parameters
+    ----------
+    estimator
+        Any scikit-learn compatible estimator.
+    X, Y
+        Training features and labels.
+    n_features_to_keep
+        Number of features to retain after ranking.
+    features
+        Feature names aligned to ``X`` columns.
+    fold
+        Current cross-validation fold number.
+    out_dir
+        Output directory for ranking artifacts.
+    dev_size
+        Proportion of the development split.
+    random_state
+        Optional random seed for reproducibility.
+    rank_features
+        Whether to persist ranking artifacts.
+
+    Returns
+    -------
+    dict
+        Feature elimination payload for this step.
     """
-    Performs a single step of feature elimination using a development dataset.
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-        n_features_to_keep: Number of features to keep
-        features: np.ndarray of feature names
-        fold (int): Current fold
-        out_dir (str): Output directory
-        dev_size (flaot): Size of development set
-        SEED (bool): Whether to use a fixed random state
-        RANK (bool): Whether to perform feature ranking
-
-    Returns:
-        dict: A dictionary containing feature elimination results
-
-    Raises:
-        ValueError: If n_features_to_keep is greater than the number of features in X
-    """
     if n_features_to_keep > X.shape[1]:
         raise ValueError(
             "n_features_to_keep cannot be greater than the number of features in X"
         )
 
-    kwargs = (
-        {"random_state": 13, "test_size": dev_size} if SEED else {"test_size": dev_size}
+    X_train, X_dev, y_train, y_dev = train_test_split(
+        X, Y, test_size=dev_size, random_state=random_state
     )
-    X1, X2, Y1, Y2 = train_test_split(X, Y, **kwargs)
 
-    estimator.fit(X1, Y1)
-    estimator.feature_importances_ = _get_feature_importances(estimator)
+    estimator.fit(X_train, y_train)
+    estimator.feature_importances_ = get_feature_importances(estimator)
 
-    rank = np.argsort(estimator.feature_importances_)[::-1]  # reverse sort
+    rank = np.argsort(estimator.feature_importances_)[::-1]
     selected = rank[:n_features_to_keep]
 
-    features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, RANK)
-    metrics = {}
+    features_rank_fnc(features, rank, n_features_to_keep, fold, out_dir, rank_features)
+    metrics: Dict[str, float] = {}
     if is_classifier(estimator):
         metrics.update(
             {
-                "nmi_score": dev_score_nmi(estimator, X2, Y2),
-                "accuracy_score": dev_score_accuracy(estimator, X2, Y2),
-                "roc_auc_score": dev_score_roc(estimator, X2, Y2),
+                "nmi_score": dev_score_nmi(estimator, X_dev, y_dev),
+                "accuracy_score": dev_score_accuracy(estimator, X_dev, y_dev),
+                "roc_auc_score": dev_score_roc(estimator, X_dev, y_dev),
             }
         )
     else:
         metrics.update(
             {
-                "r2_score": dev_score_r2(estimator, X2, Y2),
-                "mse_score": dev_score_mse(estimator, X2, Y2),
-                "explain_var": dev_score_evar(estimator, X2, Y2),
+                "r2_score": dev_score_r2(estimator, X_dev, y_dev),
+                "mse_score": dev_score_mse(estimator, X_dev, y_dev),
+                "explain_var": dev_score_evar(estimator, X_dev, y_dev),
             }
         )
+
     return {
-        "n_features": X1.shape[1],
+        "n_features": X_train.shape[1],
         "selected": selected,
         "metrics": metrics,
     }
 
 
 def _regr_fe(
-    estimator, X, Y, n_features_iter, features, fold, out_dir, dev_size, SEED, RANK
+    estimator,
+    X: ArrayLike,
+    Y: ArrayLike,
+    n_features_iter: Iterable[int],
+    features: ArrayLike,
+    fold: int,
+    out_dir: str,
+    dev_size: float,
+    random_state: int | None,
+    rank_features: bool,
 ):
-    """
-    Iterate over features to by eliminated by step.
+    """Iterate over decreasing feature sets using development scoring."""
 
-    Args:
-        estimator: A scikit-learn estimator
-        X: DataFrame or np.ndarray of developmental dataset
-        Y: np.ndarray of sample labels from training data set
-        n_features_iter: Iterator for number of features to keep loop
-        features: np.ndarray of feature names
-        fold (int): Current fold
-        out_dir (str): Output directory
-        dev_size (flaot): Size of development set
-        SEED (bool): Whether to use a fixed random state
-        RANK (bool): Whether to perform feature ranking
-
-    Returns:
-        dict: Feature elimination results for each iteration
-
-    Raises:
-        ValueError: If X and features have different number of columns
-    """
     if X.shape[1] != len(features):
         raise ValueError("Number of columns in X must match the length of features")
     indices = np.arange(X.shape[1])
 
     for nf in chain(n_features_iter, [1]):
-        p = _regr_fe_step(
-            estimator, X, Y, nf, features, fold, out_dir, dev_size, SEED, RANK
+        payload = _regr_fe_step(
+            estimator,
+            X,
+            Y,
+            nf,
+            features,
+            fold,
+            out_dir,
+            dev_size,
+            random_state,
+            rank_features,
         )
 
         yield {
-            "n_features": p["n_features"],
-            "metrics": p["metrics"],
+            "n_features": payload["n_features"],
+            "metrics": payload["metrics"],
             "indices": indices.copy(),
-            "selected": p["selected"],
+            "selected": payload["selected"],
         }
-        indices = indices[p["selected"]]
-        features = features[p["selected"]]
+        indices = indices[payload["selected"]]
+        features = features[payload["selected"]]
         X = (
-            X[:, p["selected"]]
+            X[:, payload["selected"]]
             if isinstance(X, np.ndarray)
-            else X.iloc[:, p["selected"]]
+            else X.iloc[:, payload["selected"]]
         )

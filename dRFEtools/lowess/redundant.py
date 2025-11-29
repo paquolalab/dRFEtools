@@ -1,21 +1,20 @@
-"""
-This script contains functions to calculate core + peripheral features
-based on a lowess fitted curve. Uses a log10 transformation of feature
-inputs. Also contains the optimization plot function for manual
-parameter optimization for lowess.
+"""LOWESS-based utilities for dynamic RFE plots and thresholds."""
 
-Developed by Kynon Jade Benjamin.
-"""
+from __future__ import annotations
 
-__author__ = "Kynon J Benjamin"
+from pathlib import Path
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from matplotlib import pyplot as plt
+from numpy.typing import ArrayLike
 from scipy import interpolate
-import matplotlib.pyplot as plt
 
-from ..utils import normalize_rfe_result
+from ..utils import normalize_rfe_result, save_plot_variants
+
+__author__ = "Kynon J Benjamin"
 
 __all__ = [
     "_cal_lowess",
@@ -24,63 +23,39 @@ __all__ = [
     "extract_peripheral_lowess",
 ]
 
+DEFAULT_FRAC = 0.3
+DEFAULT_STEP_SIZE = 0.02
+LOWESS_POINTS = 5001
 
-def _run_lowess(xnew, ynew, frac):
-    """
-    Internal function to run LOWESS.
 
-    Args:
-        xnew (array-like): Independent variable values.
-        ynew (array-like): Dependent variable values.
-        frac (float): The fraction of the data used when estimating each y-value.
+def _run_lowess(xnew: ArrayLike, ynew: ArrayLike, frac: float) -> np.ndarray:
+    """Execute LOWESS smoothing."""
 
-    Returns:
-        numpy.ndarray: Smoothed values from LOWESS.
-    """
     lowess = sm.nonparametric.lowess
     return lowess(ynew, xnew, frac=frac, it=20)
 
 
-def _array_to_tuple(np_array):
-    """
-    Internal function to convert array to tuple.
+def _array_to_tuple(np_array: ArrayLike):
+    """Recursively convert numpy arrays into tuples for statsmodels."""
 
-    Args:
-        np_array (numpy.ndarray): Numpy array to be converted.
-
-    Returns:
-        tuple: Converted tuple.
-    """
     try:
         return tuple(_array_to_tuple(_) for _ in np_array)
     except TypeError:
         return np_array
 
 
-def _get_elim_df_ordered(d, multi):
-    """
-    Internal function to extract elimination information from dictionary
-    and convert to data frame. Also performs log10 normalization on features.
+def _get_elim_df_ordered(d: Dict, multi: bool, use_accuracy: bool) -> pd.DataFrame:
+    """Convert elimination dictionary into an ordered DataFrame."""
 
-    Args:
-        d (dict): Dictionary containing elimination information.
-        multi (bool): Whether the target is multi-class.
-
-    Returns:
-        pandas.DataFrame: DataFrame with elimination information.
-    """
     rows = []
-    for k, value in d.items():
+    for n_features, value in d.items():
         normalized = normalize_rfe_result(value)
         metrics = normalized.get("metrics", {})
-        y_val = (
-            metrics.get("roc_auc_score")
-            if multi
-            else metrics.get("nmi_score", metrics.get("r2_score"))
-        )
+        metric_key = "accuracy_score" if use_accuracy else "roc_auc_score" if multi else "nmi_score"
+        y_val = metrics.get(metric_key) if metric_key in metrics else metrics.get("r2_score")
         rows.append(
             {
-                "x": k,
+                "x": n_features,
                 "y": y_val,
                 "acc": metrics.get("accuracy_score"),
             }
@@ -90,43 +65,22 @@ def _get_elim_df_ordered(d, multi):
     return df_elim
 
 
-def _cal_lowess(d, frac, multi, acc):
-    """
-    Internal function to calculate the lowess curve.
+def _cal_lowess(d: Dict, frac: float, multi: bool, acc: bool) -> Tuple[np.ndarray, ...]:
+    """Calculate the LOWESS curve for elimination metrics."""
 
-    Args:
-        d (dict): Dictionary from dRFE.
-        frac (float): Fraction for lowess smoothing.
-        multi (bool): Whether the target is multi-class.
-        acc (bool): Use accuracy metric to optimize data.
-
-    Returns:
-        tuple: n_features (x), model validation values (y), lowess curve (z), xnew, ynew.
-    """
-    df_elim = _get_elim_df_ordered(d, multi)
-    x = df_elim["log10_x"].values
-    y = df_elim["acc"].values if acc else df_elim["y"].values
+    df_elim = _get_elim_df_ordered(d, multi, acc)
+    x = df_elim["log10_x"].to_numpy()
+    y = df_elim["acc"].to_numpy() if acc else df_elim["y"].to_numpy()
     tck = interpolate.splrep(x, y, s=0)
-    xnew = np.linspace(x.min(), x.max(), num=5001, endpoint=True)
+    xnew = np.linspace(x.min(), x.max(), num=LOWESS_POINTS, endpoint=True)
     ynew = interpolate.splev(xnew, tck, der=0)
     z = _run_lowess(_array_to_tuple(xnew), _array_to_tuple(ynew), frac)
     return x, y, z, xnew, ynew
 
 
-def _cal_lowess_rate_log10(d, frac=3 / 10, multi=False, acc=False):
-    """
-    Calculate rate of change on the lowess fitted curve with log10
-    transformation.
+def _cal_lowess_rate_log10(d: Dict, frac: float = DEFAULT_FRAC, multi: bool = False, acc: bool = False) -> pd.DataFrame:
+    """Compute rate of change on the log10-transformed LOWESS curve."""
 
-    Args:
-        d (dict): Dictionary from dRFE.
-        frac (float): Fraction for lowess smoothing.
-        multi (bool): Whether the target is multi-class.
-        acc (bool): Use accuracy metric to optimize data.
-
-    Returns:
-        pandas.DataFrame: DataFrame with n_features, lowess value, and rate of change (DxDy).
-    """
     _, _, z, _, _ = _cal_lowess(d, frac, multi, acc)
     dfz = pd.DataFrame(z, columns=["Features", "LOWESS"])
     pts = dfz.drop(0).copy()
@@ -134,22 +88,11 @@ def _cal_lowess_rate_log10(d, frac=3 / 10, multi=False, acc=False):
     return pts
 
 
-def extract_max_lowess(d, frac=3 / 10, multi=False, acc=False):
-    """
-    Extract max features based on rate of change of log10
-    transformed lowess fit curve.
+def extract_max_lowess(d: Dict, frac: float = DEFAULT_FRAC, multi: bool = False, acc: bool = False) -> Tuple[int, float]:
+    """Extract max features based on LOWESS rate of change."""
 
-    Args:
-        d (dict): Dictionary from dRFE.
-        frac (float): Fraction for lowess smoothing.
-        multi (bool): Whether the target is multi-class.
-        acc (bool): Use accuracy metric to optimize data.
-
-    Returns:
-        tuple: Number of peripheral features and closest value.
-    """
     _, _, z, xnew, ynew = _cal_lowess(d, frac, multi, acc)
-    df_elim = _get_elim_df_ordered(d, multi)
+    df_elim = _get_elim_df_ordered(d, multi, acc)
     df_lowess = pd.DataFrame(
         {
             "X": xnew,
@@ -163,23 +106,17 @@ def extract_max_lowess(d, frac=3 / 10, multi=False, acc=False):
     return df_elim[df_elim["log10_x"] == closest_val].x.values[0], closest_val
 
 
-def extract_peripheral_lowess(d, frac=3 / 10, step_size=0.02, multi=False, acc=False):
-    """
-    Extract peripheral features based on rate of change of log10
-    transformed lowess fit curve.
+def extract_peripheral_lowess(
+    d: Dict,
+    frac: float = DEFAULT_FRAC,
+    step_size: float = DEFAULT_STEP_SIZE,
+    multi: bool = False,
+    acc: bool = False,
+) -> Tuple[int, float]:
+    """Extract peripheral features based on LOWESS curvature."""
 
-    Args:
-        d (dict): Dictionary from dRFE.
-        frac (float): Fraction for lowess smoothing.
-        step_size (float): Rate of change step size to analyze for extraction.
-        multi (bool): Whether the target is multi-class.
-        acc (bool): Use accuracy metric to optimize data.
-
-    Returns:
-        tuple: Number of peripheral features and redundant feature log10 value.
-    """
     _, _, z, xnew, ynew = _cal_lowess(d, frac, multi, acc)
-    df_elim = _get_elim_df_ordered(d, multi)
+    df_elim = _get_elim_df_ordered(d, multi, acc)
     df_lowess = pd.DataFrame(
         {
             "X": xnew,
@@ -203,64 +140,34 @@ def extract_peripheral_lowess(d, frac=3 / 10, step_size=0.02, multi=False, acc=F
 
 
 def optimize_lowess_plot(
-    d,
-    fold,
-    output_dir,
-    frac=3 / 10,
-    step_size=0.02,
-    classify=True,
-    save_plot=False,
-    multi=False,
-    acc=False,
-    print_out=True,
-):
-    """
-    Plot the LOWESS smoothing plot for RFE with lines annotating set selection.
+    d: Dict,
+    fold: int,
+    output_dir: str | Path,
+    frac: float = DEFAULT_FRAC,
+    step_size: float = DEFAULT_STEP_SIZE,
+    classify: bool = True,
+    save_plot: bool = False,
+    multi: bool = False,
+    acc: bool = False,
+    print_out: bool = True,
+) -> None:
+    """Plot the LOWESS smoothing curve with selection annotations."""
 
-    Args:
-        d (dict): Dictionary from dRFE.
-        fold (int): Current fold.
-        output_dir (str): Output directory.
-        frac (float): Fraction for lowess smoothing.
-        step_size (float): Rate of change step size to analyze for extraction.
-        classify (bool): Whether the target is classification.
-        save_plot (bool): Save the optimization plot.
-        multi (bool): Whether the target is multi-class.
-        acc (bool): Use accuracy metric to optimize data.
-        print_out (bool): Print to screen.
-
-    Returns:
-        None
-
-    Notes:
-       Will generate a plot with LOWESS smoothing
-    """
-    if classify:
-        label = "ROC AUC" if multi else "Accuracy" if acc else "NMI"
-    else:
-        label = "R2"
+    label = "ROC AUC" if (classify and multi) else "Accuracy" if acc else "NMI" if classify else "R2"
     title = f"Fraction: {frac:.2f}, Step Size: {step_size:.2f}"
 
     x, y, z, _, _ = _cal_lowess(d, frac, multi, acc)
-    df_elim = pd.DataFrame({"X": 10**x - 0.5, "Y": y})
+    df_elim = pd.DataFrame({"X": 10 ** x - 0.5, "Y": y})
     lowess_df = pd.DataFrame(z, columns=["X0", "Y0"])
     lowess_df["X0"] = 10 ** lowess_df["X0"] - 0.5
     lo, _ = extract_max_lowess(d, frac, multi, acc)
     l1, _ = extract_peripheral_lowess(d, frac, step_size, multi, acc)
 
-    plt.clf()
-    plt.figure()
-    plt.plot(df_elim["X"], df_elim["Y"], "o", label="dRFE")
-    plt.plot(lowess_df["X0"], lowess_df["Y0"], "-", label="Lowess")
-    plt.vlines(
-        lo,
-        ymin=np.min(y),
-        ymax=np.max(y),
-        colors="b",
-        linestyles="--",
-        label="Max Features",
-    )
-    plt.vlines(
+    fig, ax = plt.subplots()
+    ax.plot(df_elim["X"], df_elim["Y"], "o", label="dRFE")
+    ax.plot(lowess_df["X0"], lowess_df["Y0"], "-", label="Lowess")
+    ax.vlines(lo, ymin=np.min(y), ymax=np.max(y), colors="b", linestyles="--", label="Max Features")
+    ax.vlines(
         l1,
         ymin=np.min(y),
         ymax=np.max(y),
@@ -268,17 +175,16 @@ def optimize_lowess_plot(
         linestyles="--",
         label="Peripheral Features",
     )
-    plt.xscale("log")
-    plt.xlabel("log(N Features)")
-    plt.ylabel(label)
-    plt.legend(loc="best")
-    plt.title(title)
+    ax.set_xscale("log")
+    ax.set_xlabel("log(N Features)")
+    ax.set_ylabel(label)
+    ax.set_title(title)
+    ax.legend(loc="best")
 
     if save_plot:
-        for ext in ["png", "pdf", "svg"]:
-            plt.savefig(
-                f"{output_dir}/optimize_lowess_{fold}_frac{frac:.2f}_step_{step_size:.2f}_{label.replace(' ', '_')}.{ext}"
-            )
+        output_dir = Path(output_dir)
+        base = output_dir / f"optimize_lowess_{fold}_frac{frac:.2f}_step_{step_size:.2f}_{label.replace(' ', '_')}"
+        save_plot_variants(fig, base)
 
     if print_out:
         plt.show()

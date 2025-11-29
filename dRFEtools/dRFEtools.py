@@ -1,33 +1,10 @@
 #!/usr/bin/env python
-"""
-This package has several function to run dynamic recursive feature elimination
-(dRFE) for random forest and linear model classifier and regression models. For
-random forest, it assumes Out-of-Bag (OOB) is set to True. For linear models,
-it generates a developmental set. For both classification and regression, three
-measurements are calculated for feature selection:
+"""Dynamic recursive feature elimination interfaces."""
 
-Classification:
-1. Normalized mutual information
-2. Accuracy
-3. Area under the curve (AUC) ROC curve
+from __future__ import annotations
 
-Regression:
-1. R2 (this can be negative if model is arbitrarily worse)
-2. Explained variance
-3. Mean squared error
-
-The package has been split in to four additional scripts for:
-1. Out-of-bag dynamic RFE metrics (AP)
-2. Validation set dynamic RFE metrics (KJB)
-3. Rank features function (TK)
-4. Lowess core + peripheral selection (KJB)
-
-Original author Apuã Paquola (AP).
-Edits and package management by Kynon Jade Benjamin (KJB)
-Feature ranking modified from Tarun Katipalli (TK) ranking function.
-"""
-__author__ = "Apuã Paquola"
-
+from pathlib import Path
+from typing import Dict, Iterable, Tuple
 from warnings import filterwarnings
 
 from matplotlib import MatplotlibDeprecationWarning
@@ -41,89 +18,81 @@ filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 filterwarnings("ignore", category=UserWarning, module="plotnine.*")
 filterwarnings("ignore", category=DeprecationWarning, module="plotnine.*")
 
-__all__ = [
-    "rf_rfe",
-    "dev_rfe",
-    "plot_metric",
-    "plot_with_lowess_vline",
-]
+__all__ = ["rf_rfe", "dev_rfe", "plot_metric", "plot_with_lowess_vline"]
 
 
-def _n_features_iter(nf: int, keep_rate: float) -> int:
-    """
-    Determines the features to keep.
+def _n_features_iter(nf: int, keep_rate: float) -> Iterable[int]:
+    """Yield the number of features to keep at each elimination step."""
 
-    Args:
-        nf (int): Current number of features
-        keep_rate (float): Percentage of features to keep
-
-    Returns:
-        int: Number of features to keep
-    """
     while nf != 1:
         nf = max(1, int(nf * keep_rate))
         yield nf
 
 
+def _normalize_metrics(estimator, normalized: Dict) -> Dict:
+    """Select task-appropriate metrics from a normalized payload."""
+
+    metrics = normalized.get("metrics", {})
+    if not isinstance(normalized, dict):
+        return metrics
+
+    if isinstance(estimator, RandomForestClassifier):
+        return {
+            key: metrics[key]
+            for key in ("nmi_score", "accuracy_score", "roc_auc_score")
+            if key in metrics
+        }
+    if is_classifier(estimator):
+        return {
+            key: metrics[key]
+            for key in ("nmi_score", "accuracy_score", "roc_auc_score")
+            if key in metrics
+        }
+    return {
+        key: metrics[key]
+        for key in ("r2_score", "mse_score", "explain_var")
+        if key in metrics
+    }
+
+
 def rf_rfe(
-    estimator, X, Y, features, fold, out_dir=".", elimination_rate=0.2, RANK=True
-):
-    """
-    Runs random forest feature elimination step over iterator process.
+    estimator,
+    X,
+    Y,
+    features,
+    fold: int,
+    out_dir: str | Path = ".",
+    elimination_rate: float = 0.2,
+    RANK: bool = True,
+) -> Tuple[Dict[int, Dict], Dict]:
+    """Run random-forest feature elimination over an iterator process."""
 
-    Args:
-        estimator: Random forest classifier object
-        X (DataFrame): Training data
-        Y (array-like): Sample labels from training data set
-        features (array-like): Feature names
-        fold (int): Current fold
-        out_dir (str): Output directory. Default '.'
-        elimination_rate (float): Percent rate to reduce feature list. Default 0.2
-        RANK (bool): Whether to perform feature ranking. Default True
-
-    Returns:
-        tuple: Dictionary with elimination results, and first elimination step results
-    """
     if not 0 < elimination_rate < 1:
         raise ValueError("elimination_rate must be between 0 and 1")
 
-    d = {}
-    pfirst = None
+    results: Dict[int, Dict] = {}
+    first_pass: Dict | None = None
     keep_rate = 1 - elimination_rate
+    out_dir = Path(out_dir)
 
-    for p in _rf_fe(
+    for payload in _rf_fe(
         estimator,
         X,
         Y,
         _n_features_iter(X.shape[1], keep_rate),
         features,
         fold,
-        out_dir,
+        str(out_dir),
         RANK,
     ):
-        normalized = normalize_rfe_result(p)
-        metrics = normalized.get("metrics", {})
+        normalized = normalize_rfe_result(payload)
+        normalized["metrics"] = _normalize_metrics(estimator, normalized)
 
-        if not isinstance(p, dict):
-            if isinstance(estimator, RandomForestClassifier):
-                metrics = {
-                    key: metrics[key]
-                    for key in ("nmi_score", "accuracy_score", "roc_auc_score")
-                    if key in metrics
-                }
-            else:
-                metrics = {
-                    key: metrics[key]
-                    for key in ("r2_score", "mse_score", "explain_var")
-                    if key in metrics
-                }
-        normalized["metrics"] = metrics
+        if first_pass is None:
+            first_pass = normalized
+        results[normalized["n_features"]] = normalized
 
-        if pfirst is None:
-            pfirst = normalized
-        d[normalized["n_features"]] = normalized
-
-    return d, pfirst
+    return results, first_pass
 
 
 def dev_rfe(
@@ -131,71 +100,43 @@ def dev_rfe(
     X,
     Y,
     features,
-    fold,
-    out_dir=".",
-    elimination_rate=0.2,
-    dev_size=0.2,
-    RANK=True,
-    SEED=False,
-):
-    """
-    Runs recursive feature elimination for linear model step over iterator
-    process assuming developmental set is needed.
+    fold: int,
+    out_dir: str | Path = ".",
+    elimination_rate: float = 0.2,
+    dev_size: float = 0.2,
+    RANK: bool = True,
+    SEED: bool = False,
+    random_state: int | None = None,
+) -> Tuple[Dict[int, Dict], Dict]:
+    """Recursive feature elimination for estimators using a dev split."""
 
-    Args:
-        estimator: Classifier or regression linear model object
-        X (DataFrame): Training data
-        Y (array-like): Sample labels from training data set
-        features (array-like): Feature names
-        fold (int): Current fold
-        out_dir (str): Output directory. Default '.'
-        elimination_rate (float): Percent rate to reduce feature list. Default 0.2
-        dev_size (float): Developmental set size. Default 0.2
-        RANK (bool): Run feature ranking. Default True
-        SEED (bool): Use fixed random state. Default False
-
-    Returns:
-        tuple: Dictionary with elimination results, and first elimination step results
-    """
     if not 0 < elimination_rate < 1 or not 0 < dev_size < 1:
         raise ValueError("elimination_rate and dev_size must be between 0 and 1")
 
-    d = {}
-    pfirst = None
+    results: Dict[int, Dict] = {}
+    first_pass: Dict | None = None
     keep_rate = 1 - elimination_rate
+    out_dir = Path(out_dir)
 
-    for p in _regr_fe(
+    resolved_random_state = 13 if SEED else random_state
+
+    for payload in _regr_fe(
         estimator,
         X,
         Y,
         _n_features_iter(X.shape[1], keep_rate),
         features,
         fold,
-        out_dir,
+        str(out_dir),
         dev_size,
-        SEED,
+        resolved_random_state,
         RANK,
     ):
-        normalized = normalize_rfe_result(p)
-        metrics = normalized.get("metrics", {})
+        normalized = normalize_rfe_result(payload)
+        normalized["metrics"] = _normalize_metrics(estimator, normalized)
 
-        if not isinstance(p, dict):
-            if is_classifier(estimator):
-                metrics = {
-                    key: metrics[key]
-                    for key in ("nmi_score", "accuracy_score", "roc_auc_score")
-                    if key in metrics
-                }
-            else:
-                metrics = {
-                    key: metrics[key]
-                    for key in ("r2_score", "mse_score", "explain_var")
-                    if key in metrics
-                }
-        normalized["metrics"] = metrics
+        if first_pass is None:
+            first_pass = normalized
+        results[normalized["n_features"]] = normalized
 
-        if pfirst is None:
-            pfirst = normalized
-        d[normalized["n_features"]] = normalized
-
-    return d, pfirst
+    return results, first_pass
