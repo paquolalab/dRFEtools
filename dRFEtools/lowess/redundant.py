@@ -62,11 +62,19 @@ def _cal_lowess(d: Dict, frac: float, multi: bool, acc: bool) -> Tuple[np.ndarra
     """Calculate the LOWESS curve for elimination metrics."""
 
     df_elim = _get_elim_df_ordered(d, multi, acc)
-    x = df_elim["log10_x"].to_numpy()
-    y = df_elim["acc"].to_numpy() if acc else df_elim["y"].to_numpy()
-    tck = interpolate.splrep(x, y, s=0)
+    x = df_elim["log10_x"].values
+    y = df_elim["acc"].values if acc else df_elim["y"].values
+
+    # Ensure spline degree is valid form small datasets
+    m = len(x)
+    k = min(3, max(1, m - 1)) # Spline degree between 1 and 3
+
+    tck = interpolate.splrep(x, y, s=0, k=k)
+
     xnew = np.linspace(x.min(), x.max(), num=LOWESS_POINTS, endpoint=True)
     ynew = interpolate.splev(xnew, tck, der=0)
+
+    # LOWESS line
     z = _run_lowess(_array_to_tuple(xnew), _array_to_tuple(ynew), frac)
     return x, y, z, xnew, ynew
 
