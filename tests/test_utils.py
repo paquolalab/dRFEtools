@@ -6,7 +6,9 @@ from dRFEtools.utils import get_feature_importances, normalize_rfe_result
 
 
 def test_normalize_rfe_result_tuple_conversion():
-    result = normalize_rfe_result((5, 0.5, 0.6, np.array([0, 1, 2])))
+    with pytest.warns(DeprecationWarning):
+        result = normalize_rfe_result((5, 0.5, 0.6, np.array([0, 1, 2])))
+
     assert result["n_features"] == 5
     assert set(result["metrics"].keys()) == {
         "nmi_score",
