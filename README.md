@@ -80,8 +80,9 @@ DOI: [10.1093/bioinformatics/btad513](10.1093/bioinformatics/btad513).
 
 ## Tutorials
 
-We have two tutorials for [optimization](./examples/optimization.md)
-(version 0.2) and [classification](./examples/classification.md) (version 0.3+).
+We have two tutorials for [optimization](./examples/optimization.md) and
+[classification](./examples/classification.md) that align with the 0.4.x API
+documented on Read the Docs.
 
 In addition to this, we have example code used in the manuscript for
 scikit-learn simulation, biological simulation, and BrainSEQ Phase 1
@@ -93,10 +94,11 @@ at the link below.
 
 ### Core elimination functions
 
-* **`rf_rfe`** – Runs random-forest feature elimination and returns a tuple of
-  `(results_by_feature_count, first_step)`. Each dictionary entry contains the
-  number of retained features (`n_features`), the task-appropriate metrics, and
-  the indices of surviving features.
+* **`rf_rfe`** – Runs random-forest feature elimination and returns a pair of
+  standardized dictionaries: the full history keyed by feature count and the
+  first elimination step. Each entry contains ``n_features``, a metrics mapping
+  appropriate for the task, the original indices, and the indices of surviving
+  features.
 * **`dev_rfe`** – Performs the same elimination loop for estimators that rely on
   a developmental split, yielding the same standardized result structure as
   `rf_rfe`.
@@ -132,7 +134,8 @@ top-level package:
 
 * **`normalize_rfe_result`**, **`get_feature_importances`**, and
   **`save_plot_variants`** are available under ``dRFEtools.utils`` and support
-  the standardized dictionary-based API.
+  the standardized dictionary-based API. **`ensure_path`** is provided to safely
+  normalize user-supplied file paths.
 * The command-line interface in ``dRFEtools.cli`` wraps the same workflows for
   CSV inputs: run ``python -m dRFEtools.cli --help`` to explore available
-  commands.
+  commands, including custom metric selection and development-split sizing.

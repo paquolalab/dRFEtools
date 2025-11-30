@@ -84,6 +84,7 @@ Utility helpers
    utils.normalize_rfe_result
    utils.get_feature_importances
    utils.save_plot_variants
+   utils.ensure_path
 
 
 Command-line entry points
