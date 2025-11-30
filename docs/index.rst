@@ -21,7 +21,7 @@ Authors
 Package Information
 -------------------
 
-dRFEtools is developed in Python 3.10+.
+dRFEtools is developed in Python 3.11+.
 
 In addition to scikit-learn, ``dRFEtools`` is also built with:
 
