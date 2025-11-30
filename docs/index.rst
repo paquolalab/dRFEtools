@@ -86,7 +86,7 @@ API Overview
 that include the number of retained features, a task-specific ``metrics``
 mapping, and the indices of surviving features. The same format is consumed by
 the plotting, LOWESS, and scoring helpers documented in the reference manual
-below.
+below, and is reflected throughout the tutorials for the 0.4.x release.
 
 .. toctree::
    :maxdepth: 2
