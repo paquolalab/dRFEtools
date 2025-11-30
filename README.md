@@ -5,7 +5,7 @@ scikit-learn.
 
 Authors: Apuã Paquola, Kynon Jade Benjamin, and Tarun Katipalli
 
-Package developed in Python 3.10+.
+Package developed in Python 3.11+.
 
 In addition to scikit-learn, `dRFEtools` is also built with NumPy, SciPy,
 Pandas, matplotlib, plotnine, and statsmodels. Currently, dynamic RFE supports
@@ -64,9 +64,9 @@ architecture:
 
 If using please cite the following:
 
-Kynon J M Benjamin, Tarun Katipalli, Apuã C M Paquola, 
-dRFEtools: dynamic recursive feature elimination for omics, 
-Bioinformatics, Volume 39, Issue 8, August 2023, btad513, 
+Kynon J M Benjamin, Tarun Katipalli, Apuã C M Paquola,
+dRFEtools: dynamic recursive feature elimination for omics,
+Bioinformatics, Volume 39, Issue 8, August 2023, btad513,
 https://doi.org/10.1093/bioinformatics/btad513
 
 PMID: 37632789
