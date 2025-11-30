@@ -5,15 +5,13 @@ Optimization Examples
 
 .. code:: python
 
-   import os,errno
+   import os, errno
    import dRFEtools
    import numpy as np
    import pandas as pd
-   from sklearn.model_selection import KFold
-   from sklearn.datasets import make_regression
-   from sklearn.datasets import make_classification
-   from sklearn.model_selection import StratifiedKFold
-   from sklearn.model_selection import train_test_split
+   from sklearn.datasets import make_classification, make_regression
+   from sklearn.ensemble import RandomForestClassifier
+   from sklearn.model_selection import KFold, StratifiedKFold, train_test_split
 
 .. code:: python
 
@@ -41,9 +39,9 @@ Optimize classification
    )
 
    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=13)
-   #cla = dRFEtools.LogisticRegression(max_iter=1000, n_jobs=-1)
-   cla = dRFEtools.RandomForestClassifier(n_estimators=100, n_jobs=-1, 
-                                         oob_score=True, random_state=13)
+   cla = RandomForestClassifier(
+       n_estimators=100, n_jobs=-1, oob_score=True, random_state=13
+   )
 
 .. code:: python
 

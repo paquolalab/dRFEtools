@@ -12,6 +12,9 @@ from plotnine import aes, geom_point, geom_vline, ggplot, labs, scale_x_log10, t
 
 from .lowess.redundant import (
     _cal_lowess,
+    DEFAULT_FRAC,
+    LOWESS_POINTS,
+    DEFAULT_STEP_SIZE,
     extract_max_lowess,
     extract_peripheral_lowess,
 )

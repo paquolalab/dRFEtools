@@ -1,7 +1,7 @@
 Classification Example
 ======================
 
-**General application of dRFEtools, version 0.3.0+**
+**General application of dRFEtools, version 0.4.0+**
 
 .. code:: python
 
@@ -22,7 +22,7 @@ Classification Example
 
 ::
 
-   '0.3.4'
+   '0.4.0'
 
 Define functions to analyze cross-validation
 --------------------------------------------
@@ -43,10 +43,20 @@ Function
            # Run dynamic RFE for all other models
            d, pfirst = dRFEtools.dev_rfe(estimator, x_train, y_train, np.array(features),
                                         fold, outdir, RANK=False) ## Do not rank
-       df_elim = pd.DataFrame([{'fold':fold, 'elimination': 0.2, 'n features':k,
-                                'NMI score':d[k][1], 'Accuracy score':d[k][2],
-                                'ROC AUC score':d[k][3]} for k in d.keys()])
-       n_features_max = max(d, key=lambda x: d[x][1])
+   df_elim = pd.DataFrame(
+       [
+           {
+               'fold': fold,
+               'elimination': 0.2,
+               'n features': k,
+               'NMI score': d[k]['metrics'].get('nmi_score'),
+               'Accuracy score': d[k]['metrics'].get('accuracy_score'),
+               'ROC AUC score': d[k]['metrics'].get('roc_auc_score'),
+           }
+           for k in d.keys()
+       ]
+   )
+       n_features_max = max(d, key=lambda x: d[x]['metrics'].get('nmi_score', 0))
        try:
            ## Max features from lowess curve
            n_features, _ = dRFEtools.extract_max_lowess(d) ## Using default value: 0.3
@@ -58,10 +68,10 @@ Function
        ## Fit model
        estimator.fit(x_train, y_train)
        all_fts = estimator.predict(x_test)
-       estimator.fit(x_train[:, d[n_redundant][4]], y_train)
-       labels_pred_redundant = estimator.predict(x_test[:, d[n_redundant][4]])
-       estimator.fit(x_train[:,d[n_features][4]], y_train)
-       labels_pred = estimator.predict(x_test[:, d[n_features][4]])
+       estimator.fit(x_train[:, d[n_redundant]['indices']], y_train)
+       labels_pred_redundant = estimator.predict(x_test[:, d[n_redundant]['indices']])
+       estimator.fit(x_train[:, d[n_features]['indices']], y_train)
+       labels_pred = estimator.predict(x_test[:, d[n_features]['indices']])
        ## Output test predictions
        kwargs = {"average": "weighted"}
        pd.DataFrame({'fold': fold, "elimination": 0.2, 'real': y_test, 
@@ -81,13 +91,15 @@ Function
            output['train_acc'] = dRFEtools.oob_score_accuracy(estimator, y_train)
            output['train_roc'] = dRFEtools.oob_score_roc(estimator, y_train)
        else:
-           output['train_nmi'] = dRFEtools.dev_score_nmi(estimator,
-                                                         x_train[:,d[n_features][4]],y_train)
-           output['train_acc'] = dRFEtools.dev_score_accuracy(estimator,
-                                                              x_train[:,d[n_features][4]],
-                                                              y_train)
-           output['train_roc'] = dRFEtools.dev_score_roc(estimator,
-                                                         x_train[:,d[n_features][4]],y_train)
+            output['train_nmi'] = dRFEtools.dev_score_nmi(
+                estimator, x_train[:, d[n_features]['indices']], y_train
+            )
+            output['train_acc'] = dRFEtools.dev_score_accuracy(
+                estimator, x_train[:, d[n_features]['indices']], y_train
+            )
+            output['train_roc'] = dRFEtools.dev_score_roc(
+                estimator, x_train[:, d[n_features]['indices']], y_train
+            )
        output['test_nmi'] = nmi(y_test, labels_pred, average_method="arithmetic")
        output['test_acc'] = accuracy_score(y_test, labels_pred)
        output['test_roc'] = roc_auc_score(y_test, labels_pred, **kwargs)
@@ -98,76 +110,25 @@ Function
 Details on the main functions used
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+``dRFEtools.rf_rfe`` drives random-forest elimination using OOB metrics.
+It accepts a fitted estimator, feature matrix, label vector, feature names,
+and fold identifier, and returns a mapping keyed by ``n_features`` plus the
+first elimination step. Each entry exposes a ``metrics`` dictionary and the
+``indices`` of surviving features, which align with the standardized API used
+throughout the tutorials.
 
-   help(dRFEtools.rf_rfe)
+``dRFEtools.extract_max_lowess`` selects the feature count where the LOWESS
+curve peaks by analyzing the rate of change on the log10-transformed scores.
+Adjust ``frac`` to control the smoothing window or enable ``multi``/``acc`` to
+optimize for multi-class or accuracy-driven runs.
 
-::
+``dRFEtools.extract_peripheral_lowess`` identifies the inflection point on the
+LOWESS-smoothed trajectory by scanning the derivative of the log10 curve using
+``step_size``. It returns the peripheral feature count and the corresponding
+log-transformed position.
 
-   Help on function rf_rfe in module dRFEtools.dRFEtools:
-
-   rf_rfe(estimator, X, Y, features, fold, out_dir='.', elimination_rate=0.2, RANK=True)
-       Runs random forest feature elimination step over iterator process.
-       
-       Args:
-       estimator: Random forest classifier object
-       X: a data frame of training data
-       Y: a vector of sample labels from training data set
-       features: a vector of feature names
-       fold: current fold
-       out_dir: output directory. default '.'
-       elimination_rate: percent rate to reduce feature list. default .2
-       
-       Yields:
-       dict: a dictionary with number of features, normalized mutual
-             information score, accuracy score, auc roc curve and array of the
-             indexes for features to keep
-
-.. code:: python
-
-   help(dRFEtools.extract_max_lowess)
-
-::
-
-   Help on function extract_max_lowess in module dRFEtools.lowess_redundant:
-
-   extract_max_lowess(d, frac=0.3, multi=False, acc=False)
-       Extract max features based on rate of change of log10
-       transformed lowess fit curve.
-       
-       Args:
-       d: Dictionary from dRFE
-       frac: Fraction for lowess smoothing. Default 3/10.
-       
-       Yields:
-       int: number of peripheral features
-
-.. code:: python
-
-   help(dRFEtools.extract_peripheral_lowess)
-
-::
-
-   Help on function extract_peripheral_lowess in module dRFEtools.lowess_redundant:
-
-   extract_peripheral_lowess(d, frac=0.3, step_size=0.02, multi=False, acc=False)
-       Extract peripheral features based on rate of change of log10
-       transformed lowess fit curve.
-       
-       Args:
-       d: Dictionary from dRFE
-       frac: Fraction for lowess smoothing. Default 3/10.
-       step_size: Rate of change step size to analyze for extraction
-       (default: 0.02)
-       multi: Is the target multi-class (boolean). Default False.
-       classify: Is the target classification (boolean). Default True.
-       acc: Use accuracy metric to optimize data (boolean). Default False.
-       
-       Yields:
-       int: number of peripheral features
-
-This function has been updated from the previous name
-**extract_redundant_lowess**!
+These helpers live in ``dRFEtools.lowess.redundant`` and replace the legacy
+``extract_redundant_lowess`` naming used in earlier releases.
 
 Generate classification simulation data
 ---------------------------------------

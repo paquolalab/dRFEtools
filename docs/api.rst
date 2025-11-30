@@ -4,17 +4,25 @@ API
 
 .. currentmodule:: dRFEtools
 
-Main functions
+Core elimination interfaces
+--------------------------
+
+.. autosummary::
+   :toctree: functions
+
+   rf_rfe
+   dev_rfe
+
+
+LOWESS helpers
 --------------
 
 .. autosummary::
    :toctree: functions
 
-    rf_rfe
-    dev_rfe
-    features_rank_fnc
-    extract_max_lowess
-    extract_peripheral_lowess
+   extract_max_lowess
+   extract_peripheral_lowess
+   optimize_lowess_plot
 
 
 Plotting functions
@@ -26,9 +34,17 @@ top-level package for convenience.
 .. autosummary::
    :toctree: functions
 
-   optimize_lowess_plot
    plot_metric
    plot_with_lowess_vline
+
+
+Ranking utilities
+-----------------
+
+.. autosummary::
+   :toctree: functions
+
+   features_rank_fnc
 
 
 Developmental set metrics functions
@@ -57,3 +73,26 @@ Out-of-Bag (OOB) metrics functions
    oob_score_nmi
    oob_score_r2
    oob_score_roc
+
+
+Utility helpers
+---------------
+
+.. autosummary::
+   :toctree: functions
+
+   utils.normalize_rfe_result
+   utils.get_feature_importances
+   utils.save_plot_variants
+   utils.ensure_path
+
+
+Command-line entry points
+-------------------------
+
+.. autosummary::
+   :toctree: functions
+
+   cli.build_parser
+   cli.run_rf_rfe
+   cli.run_dev_rfe
