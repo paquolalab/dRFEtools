@@ -20,7 +20,7 @@ Installation
 
 setup(
     name="dRFEtools",
-    version="0.3.5",
+    version="0.4.1",
     packages=find_packages(),
     install_requires=[
         "numpy>=2.0.0",

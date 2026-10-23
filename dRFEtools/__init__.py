@@ -25,7 +25,7 @@ from .scoring.random_forest import (
 )
 from .plotting import plot_metric, plot_with_lowess_vline
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 __all__ = [
     "rf_rfe",
