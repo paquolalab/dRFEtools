@@ -27,7 +27,8 @@ setup(
         "pandas>=2.0.0",
         "matplotlib>=3.7.0",
         "plotnine>=0.13.0",
-        "scikit-learn>=1.2.0",
+        "pillow>=13.0.0",
+        "scikit-learn>=1.5.0",
         "scipy>=1.14.0",
         "statsmodels>=0.14.0",
     ],
@@ -45,6 +46,6 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
     keywords="random-forest recursive-feature-elimination sklearn linear-models feature-ranking",
-    python_requires=">=3.10",
+    python_requires=">=3.11,<4.0",
     zip_safe=False,
 )
