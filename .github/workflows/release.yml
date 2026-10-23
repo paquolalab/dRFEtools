@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/security.yml
+
+  build-and-publish:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pypi
+    permissions:
+      id-token: write   # PyPI trusted publishing
+      contents: write   # GitHub release
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Install poetry
+        run: python -m pip install poetry==2.2.1
+      - name: Check tag matches package version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          v=$(poetry version -s)
+          [ "$v" = "$tag" ] || { echo "tag ${GITHUB_REF_NAME} != pyproject version $v"; exit 1; }
+          init=$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' dRFEtools/__init__.py)
+          [ "$init" = "$tag" ] || { echo "tag ${GITHUB_REF_NAME} != dRFEtools.__version__ $init"; exit 1; }
+      # The release body is this version's section of CHANGELOG.md; a tag
+      # without an entry fails here rather than publishing empty notes.
+      - name: Extract release notes
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" '
+            /^## / { if (found) exit; found = ($2 == v) ; next }
+            found
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          grep -q '[^[:space:]]' "$RUNNER_TEMP/notes.md" || { echo "no CHANGELOG.md entry for ${GITHUB_REF_NAME#v}"; exit 1; }
+      # dist/ is tracked in git and holds old wheels; clear it so only this
+      # version is uploaded and attached.
+      - name: Build
+        id: build
+        run: |
+          rm -rf dist
+          poetry build
+      # Trusted publishing, so there is no token: PyPI must list a publisher for
+      # LieberInstitute/dRFEtools, workflow release.yml, environment pypi.
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          # a re-run of a tag already uploaded by hand must not fail on the files being there
+          skip-existing: true
+      # The release names the tag and carries the artifacts even if the upload
+      # failed; `always()` would also run after a failed build, hence the guard.
+      - name: GitHub release
+        if: always() && steps.build.outcome == 'success'
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          body_path: ${{ runner.temp }}/notes.md
+          generate_release_notes: true
+          files: dist/*

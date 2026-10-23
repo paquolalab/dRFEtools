@@ -1,0 +1,73 @@
+name: Security and compatibility
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 12 * * 1"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Install security tooling
+        run: python -m pip install poetry==2.2.1 poetry-plugin-export==1.9.0 pip-audit==2.10.1
+      - name: Check lockfile and generated requirements
+        run: |
+          poetry check --lock
+          poetry export --with docs --without-hashes --format requirements.txt --output "$RUNNER_TEMP/docs-requirements.txt"
+          diff -u docs/requirements.txt "$RUNNER_TEMP/docs-requirements.txt"
+      - name: Audit all locked dependencies
+        run: python scripts/audit_lock.py
+      - name: Audit documentation requirements
+        run: python -m pip_audit --strict --no-deps --disable-pip --requirement docs/requirements.txt
+
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.14"]
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install locked dependencies and test tooling
+        run: |
+          python -m pip install -r docs/requirements.txt pytest==8.4.2 build==1.3.0
+          python -m pip install --no-deps .
+          python -m pip check
+      - name: Run tests and CLI smoke check
+        run: |
+          python -m pytest -q
+          python -m dRFEtools.cli --help
+      - name: Build documentation
+        if: matrix.python == '3.11'
+        run: python -m sphinx -b html docs "$RUNNER_TEMP/drfetools-docs"
+      - name: Build and check wheel in a clean environment
+        run: |
+          python -m build --wheel --outdir "$RUNNER_TEMP/drfetools-dist"
+          python -m venv "$RUNNER_TEMP/drfetools-wheel"
+          "$RUNNER_TEMP/drfetools-wheel/bin/python" -m pip install -c docs/requirements.txt "$RUNNER_TEMP"/drfetools-dist/*.whl
+          "$RUNNER_TEMP/drfetools-wheel/bin/python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/drfetools-wheel/bin/drfetools" --help
